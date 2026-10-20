@@ -16,8 +16,8 @@
 | 章节 | 主题 | 状态 |
 |---|---|---|
 | 01 | [基础 AI Agent 入门实战](./01-basic-agent/) | ✅ 已完成 |
-| 02 | Multi-Tool Agent：多工具调用 | 规划中 |
-| 03 | Structured Output：结构化输出 | 规划中 |
+| 02 | [Multi-Tool Agent：多工具调用](./02-multi-tool-agent/) | ✅ 已完成 |
+| 03 | [Structured Output：结构化输出](./03-structured-output/) | ✅ 已完成 |
 | 04 | Agent Memory：记忆机制 | 规划中 |
 | 05 | MCP：工具集成 | 规划中 |
 | 06 | RAG Agent：检索增强生成 | 规划中 |
