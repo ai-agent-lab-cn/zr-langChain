@@ -1,7 +1,7 @@
 ---
 title: "LangChain 入门实战（二）：Multi-Tool Agent 多工具调用与执行链路分析"
 date: 2026-10-17
-description: "基于 LangChain、Gemini 和 LangSmith，实现天气、计算、时区三个工具的自主选择与组合调用，并以真实 Trace 分析 Agent Loop、调用关系、Token 和耗时。"
+description: "基于 LangChain、Gemini 和 LangSmith，实现天气、计算、时区三个工具的组合调用；增加 Tool Call ID、参数与结果严格校验，并用真实 Trace 分析 Agent Loop、Token 和耗时。"
 tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Multi-Tool, Tool-Calling]
 ---
 
@@ -28,7 +28,7 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Multi-Tool, Tool-Call
 | 天气工具 | `get_weather(city)` | 返回**模拟**天气（非实时数据） | ✅ |
 | 计算工具 | `calculate(a, b, operation)` | 每次执行一步四则运算 | ✅ |
 | 时间工具 | `get_current_time(timezone_name)` | 根据 IANA 时区读取本机当前时间 | ✅ |
-| 消息验证 | `AIMessage.tool_calls`、`ToolMessage` | 区分请求与执行，关联 Call ID | ✅ |
+| 消息验证 | `AIMessage.tool_calls`、`ToolMessage` | 严格校验调用次数、Call ID、参数、状态和关键结果 | ✅ 离线测试 |
 | 可观测性 | LangSmith Tracing | 追踪 LLM/Tool Runs、Tokens 和耗时 | ✅ |
 
 ### 官方参考文档
@@ -112,7 +112,7 @@ def calculate(
     ...
 ```
 
-源码通过明确的运算分支执行计算，**不使用 `eval()`**，并包含非法数值和除零处理。
+源码通过明确的运算分支执行计算，**不使用 `eval()`**，并包含非法数值和除零处理。该示例使用 `float` 与 `:.15g` 输出，仅用于教学：**大整数、金融等严格精度要求的计算不适用**；需要精确十进制运算时，应考虑以字符串输入配合 `Decimal`。
 
 **③ 时间工具：按 IANA 时区获取时间**
 
@@ -167,6 +167,30 @@ uv run python 02-multi-tool-agent/main.py --case combined
 # 一次运行全部四组（会产生更多模型调用及费用）
 uv run python 02-multi-tool-agent/main.py --case all
 ```
+
+### 增强验证：从“次数达到预期”到“调用链路严格核验”
+
+早期版本的 `show_trace()` 只要求实际工具调用次数满足 `>=`，因此存在误判：即使返回了 `Error: ...`，或者 Tool Call ID 与请求对不上，仍可能显示通过。**本次优化没有修改 `create_agent()`、Gemini 模型、三个工具或四组实验问题，只增强了 `verify_trace()` / `show_trace()` 验收逻辑。**
+
+| 校验层级 | 具体规则 | 能发现的问题 |
+| --- | --- | --- |
+| **调用次数** | `AIMessage.tool_calls` 和 `ToolMessage` 的工具名称计数均须与场景 `expected` **完全一致** | 少调、多调、调用了不需要的工具 |
+| **调用关联** | 每次请求须有非空且唯一的 ID；每次结果也须有唯一 ID，并与请求的工具名、顺序对应 | 重复 ID、孤立工具结果、工具名不匹配 |
+| **执行状态** | `ToolMessage.status == "success"`，结果为非空文本且不以 `Error:` 开头 | 工具执行失败、返回显式错误 |
+| **参数与结果** | 天气查询城市为 San Francisco；时区为 `Asia/Tokyo`；两次计算的运算符、操作数和结果必须对应 `1000 → 1360` | 参数错误、错误计算、第二步没有等待第一步结果 |
+| **最终回答（轻量检查）** | 包含最终计算值 `1360`、东京指代，以及天气为模拟且非实时的文字提示 | 明显缺项或不满足说明要求 |
+
+`show_trace()` 现在返回布尔值：全部检查通过才返回 `True`。`--case all` 仍会执行全部场景并列出各自错误；结束时若有场景失败，程序以**非零退出码**结束。例如：
+
+```text
+========== 工具验证 ==========
+模型请求: {'calculate': 2}
+实际执行: {'calculate': 2}
+实验预期: {'calculate': 2}
+验证结果: ✅ 全部检查通过（次数 / ID / 状态 / 参数 / 结果）
+```
+
+上述为**优化版通过时的输出格式示意**，并非优化后重新调用 Gemini 的实测日志。验证针对本章固定的四个教学场景；最终回答只做关键词级检查，**不等于通用的语义正确性评估**。如果模型给出另一条数学上合理、但不同于本实验定义的路径，严格验收会报告不符合本次实验预期。
 
 ## 3. 核心机制与完整架构
 
@@ -253,7 +277,7 @@ uv run python 02-multi-tool-agent/main.py --case all
 | `time` | `get_current_time × 1` | 使用 `Asia/Tokyo` 时区 | ✅ |
 | `combined` | `get_weather × 1`、`get_current_time × 1`、`calculate × 2` | 三类工具均执行，计算形成两阶段依赖 | ✅ |
 
-四组独立实验合计 **8 次工具执行**。`main.py` 中的自动校验以**实际工具执行次数达到最低预期**为准（`>=`），并不自动证明所有参数与最终答案都正确；本文的参数、输出与关联关系另由终端日志和 Trace 核对。
+四组独立实验合计 **8 次工具执行**。这是**优化前已经完成的真实实验记录**；此次升级后的 `verify_trace()` 增加了次数精确匹配、Call ID 关联、错误状态、参数及关键结果验证。使用上传的原始 Combined JSON 进行了离线回放，也用三组单工具日志构造了离线消息测试；但**优化后的程序尚未在你的 Mac 上重新调用 Gemini**，正式验收仍应运行 `--case all`。
 
 ### LangSmith：单条 Combined Trace 概览
 
@@ -332,8 +356,9 @@ JSON 的 `dotted_order` 提供了各 Run 的启动时间。首轮三个工具（
 
 - **工具调用请求 ≠ 工具实际执行。** 必须区分 `AIMessage.tool_calls` 与 `ToolMessage`，并用 `tool_call_id` 关联。
 - **多 Tool Call ≠ 已证实并发。** 同一轮模型返回三个请求，本次还观察到近乎同时启动；但没有结束时间，无法证实运行时间重叠。
-- **工具次数满足预期 ≠ 结果完全正确。** 本章脚本验证执行次数，参数及输出正确性由实验记录补充核对；后续可增加参数断言和结果断言。
-- **天气是模拟数据，时间来自本机系统时钟。** 不要将其当作实时天气 API 或独立授时服务。
+- **验证应覆盖请求、关联、执行、结果。** 优化版已按固定场景严格检查请求/执行次数、Tool Call ID、`status`、参数与关键结果；但最终回答的关键词检查不等于全面的事实准确性评估。
+- **天气是模拟数据，时间来自本机系统时钟。** 不要将其当作实时天气 API 或独立授时服务；时间结果验证校验格式和时区，不向外部授时服务核时。
+- **计算为教学演示而非精确计算器。** `float` / `:.15g` 可能损失大整数与小数精度，严格金额计算应选用 `Decimal` 等方案。
 - **API Key 分别服务 Gemini 和 LangSmith。** 本项目统一读取 `GEMINI_API_KEY`；`.env` 不提交，Trace 公开前应检查业务数据与敏感信息。
 - **性能分析看单条 Trace，不用项目概览汇总替代。** 项目级模型次数、工具次数可能包含其他实验；本章的 Token 和时序以 `chapter02-combined` 为准。
 
@@ -347,4 +372,4 @@ JSON 的 `dotted_order` 提供了各 Run 的启动时间。首轮三个工具（
 
 ---
 
-**资料说明：** 本文的工具执行、Tool Call ID、Token 与启动时间取自本次 `chapter02-combined` Trace JSON；四组实验指标和费用取自本次终端输出与 LangSmith Traces 截图。所有示例密钥均为占位符，文档不包含真实凭证。
+**资料说明：** 本文的工具执行、Tool Call ID、Token 与启动时间取自优化前完成的 `chapter02-combined` Trace JSON；四组实验指标和费用取自当时的终端输出与 LangSmith Traces 截图。优化版验收逻辑已离线回放原始 Combined Trace，并测试多种故障注入；**尚未重新发起优化版 Gemini 在线实验**。所有示例密钥均为占位符，文档不包含真实凭证。
