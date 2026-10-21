@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="svgTitle svgDesc">
+<title id="svgTitle">Agent Memory：短期记忆执行架构</title>
+<desc id="svgDesc">从用户消息与 thread_id 出发，Agent 按线程加载状态、组合历史消息与新消息、调用 Gemini 并更新 AgentState；InMemorySaver 负责保存或读取 Checkpoint，LangSmith 负责观察运行。</desc>
+<defs>
+<marker id="arrowBlue" viewBox="0 0 12 12" markerWidth="7" markerHeight="7" refX="10" refY="6" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#6386AD" stroke-width="2"/></marker>
+<marker id="arrowGreen" viewBox="0 0 12 12" markerWidth="7" markerHeight="7" refX="10" refY="6" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#21936B" stroke-width="2"/></marker>
+<marker id="arrowPurple" viewBox="0 0 12 12" markerWidth="7" markerHeight="7" refX="10" refY="6" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#8B72BC" stroke-width="2"/></marker>
+<filter id="shadow" x="-15%" y="-25%" width="140%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#1E3A5F" flood-opacity="0.09"/></filter>
+</defs>
+<style>text{font-family:"Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;}</style>
+<rect x="0" y="0" width="1280" height="760" rx="0" fill="#F8FAFD" stroke="none" stroke-width="1" />
+<rect x="0" y="0" width="1280" height="12" rx="0" fill="#3567A5" stroke="none" stroke-width="1" />
+<rect x="47" y="38" width="8" height="41" rx="4" fill="#3A73B9" stroke="none" stroke-width="1" />
+<text x="75" y="70" font-size="32" font-weight="700" text-anchor="start" fill="#172C4A" >Agent Memory · 短期记忆执行架构</text>
+<text x="76" y="106" font-size="17" font-weight="400" text-anchor="start" fill="#687C91" >thread_id 定位会话  ·  Checkpointer 保存 / 恢复状态  ·  LangSmith 只负责追踪</text>
+<rect x="48" y="143" width="1184" height="239" rx="22" fill="#FFFFFF" stroke="#DEE8F5" stroke-width="1.5" filter="url(#shadow)"/>
+<rect x="68" y="164" width="9" height="22" rx="4" fill="#3A73B9" stroke="none" stroke-width="1" />
+<text x="88" y="184" font-size="16" font-weight="700" text-anchor="start" fill="#3166A6" >AGENT / LANGGRAPH</text>
+<text x="1173" y="184" font-size="15" font-weight="450" text-anchor="end" fill="#8293A7" >主执行链  ·  每次 invoke</text>
+<rect x="66" y="209" width="162" height="112" rx="18" fill="#E7F1FF" stroke="#70A2DF" stroke-width="1.7" />
+<rect x="81" y="222" width="46" height="24" rx="10" fill="#DAE9FA" stroke="none" stroke-width="1" />
+<text x="104" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >输入</text>
+<text x="147.0" y="275" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >用户消息</text>
+<text x="147.0" y="301" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >+ thread_id</text>
+<rect x="263" y="209" width="168" height="112" rx="18" fill="#F8FBFF" stroke="#C5D7EC" stroke-width="1.7" />
+<rect x="278" y="222" width="46" height="24" rx="10" fill="#E8EFF9" stroke="none" stroke-width="1" />
+<text x="301" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >恢复</text>
+<text x="347.0" y="275" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >读取当前</text>
+<text x="347.0" y="301" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >线程状态</text>
+<rect x="466" y="209" width="178" height="112" rx="18" fill="#F8FBFF" stroke="#C5D7EC" stroke-width="1.7" />
+<rect x="481" y="222" width="46" height="24" rx="10" fill="#E8EFF9" stroke="none" stroke-width="1" />
+<text x="504" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >上下文</text>
+<text x="555.0" y="275" font-size="17" font-weight="650" text-anchor="middle" fill="#19395D" >历史 messages</text>
+<text x="555.0" y="301" font-size="17" font-weight="650" text-anchor="middle" fill="#19395D" >+ 本轮消息</text>
+<rect x="679" y="209" width="160" height="112" rx="18" fill="#F8FBFF" stroke="#C5D7EC" stroke-width="1.7" />
+<rect x="694" y="222" width="46" height="24" rx="10" fill="#E8EFF9" stroke="none" stroke-width="1" />
+<text x="717" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >模型</text>
+<text x="759.0" y="275" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >Gemini</text>
+<text x="759.0" y="301" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >生成回答</text>
+<rect x="874" y="209" width="166" height="112" rx="18" fill="#F8FBFF" stroke="#C5D7EC" stroke-width="1.7" />
+<rect x="889" y="222" width="46" height="24" rx="10" fill="#E8EFF9" stroke="none" stroke-width="1" />
+<text x="912" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >写回</text>
+<text x="957.0" y="275" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >更新</text>
+<text x="957.0" y="301" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >AgentState</text>
+<rect x="1075" y="209" width="137" height="112" rx="18" fill="#E7F1FF" stroke="#70A2DF" stroke-width="1.7" />
+<rect x="1090" y="222" width="46" height="24" rx="10" fill="#DAE9FA" stroke="none" stroke-width="1" />
+<text x="1113" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#3670B6" >输出</text>
+<text x="1143.5" y="275" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >返回</text>
+<text x="1143.5" y="301" font-size="19" font-weight="650" text-anchor="middle" fill="#19395D" >Agent 回复</text>
+<path d="M 233 265 L 252 265" fill="none" stroke="#6386AD" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowBlue)"/>
+<path d="M 436 265 L 455 265" fill="none" stroke="#6386AD" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowBlue)"/>
+<path d="M 649 265 L 668 265" fill="none" stroke="#6386AD" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowBlue)"/>
+<path d="M 844 265 L 863 265" fill="none" stroke="#6386AD" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowBlue)"/>
+<path d="M 1045 265 L 1064 265" fill="none" stroke="#6386AD" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowBlue)"/>
+<rect x="48" y="422" width="725" height="249" rx="22" fill="#F2FBF7" stroke="#C9E8D7" stroke-width="1.3" />
+<rect x="70" y="447" width="8" height="22" rx="4" fill="#23A078" stroke="none" stroke-width="1" />
+<text x="88" y="466" font-size="17" font-weight="700" text-anchor="start" fill="#1D805B" >MEMORY / 会话状态</text>
+<text x="744" y="466" font-size="14" font-weight="400" text-anchor="end" fill="#5A9378" >同一 Saver · 不同 thread_id</text>
+<rect x="266" y="504" width="433" height="114" rx="17" fill="#FFFFFF" stroke="#5DBF91" stroke-width="2" filter="url(#shadow)"/>
+<rect x="284" y="527" width="48" height="47" rx="12" fill="#E1F5E9" stroke="none" stroke-width="1" />
+<rect x="297" y="539" width="22" height="21" rx="4" fill="#F3FFF7" stroke="#3D9B6D" stroke-width="2" />
+<ellipse cx="308" cy="539" rx="11" ry="4" fill="#DDF3E5" stroke="#3D9B6D" stroke-width="2"/>
+<text x="354" y="546" font-size="23" font-weight="700" text-anchor="start" fill="#155E47" >InMemorySaver</text>
+<text x="354" y="577" font-size="16" font-weight="450" text-anchor="start" fill="#42745F" >Checkpoint：按 thread_id 隔离历史状态</text>
+<text x="354" y="599" font-size="14" font-weight="420" text-anchor="start" fill="#638575" >进程内存保存 · 重启后不保留</text>
+<text x="85" y="534" font-size="17" font-weight="700" text-anchor="start" fill="#1D805B" >按线程读取</text>
+<text x="85" y="561" font-size="15" font-weight="400" text-anchor="start" fill="#527A67" >第 2 轮可获取</text>
+<text x="85" y="586" font-size="15" font-weight="400" text-anchor="start" fill="#527A67" >第 1 轮历史</text>
+<path d="M 320 504 L 320 400 L 346 400 L 346 330" fill="none" stroke="#21936B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowGreen)"/>
+<rect x="359" y="356" width="113" height="29" rx="9" fill="#DFF5E9" stroke="none" stroke-width="1" />
+<text x="415" y="376" font-size="13" font-weight="600" text-anchor="middle" fill="#167A51" >读取 Checkpoint</text>
+<path d="M 955 330 L 955 399 L 667 399 L 667 503" fill="none" stroke="#21936B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowGreen)"/>
+<rect x="736" y="360" width="117" height="28" rx="9" fill="#DFF5E9" stroke="none" stroke-width="1" />
+<text x="794" y="379" font-size="13" font-weight="600" text-anchor="middle" fill="#167A51" >保存 Checkpoint</text>
+<rect x="793" y="422" width="439" height="249" rx="22" fill="#F8F6FF" stroke="#E0D5F2" stroke-width="1.4" />
+<rect x="815" y="447" width="8" height="22" rx="4" fill="#8E74BF" stroke="none" stroke-width="1" />
+<text x="833" y="466" font-size="17" font-weight="700" text-anchor="start" fill="#7155A1" >OBSERVABILITY / 状态检查</text>
+<rect x="823" y="498" width="381" height="63" rx="14" fill="#FFFFFF" stroke="#D9CDEB" stroke-width="1.4" />
+<rect x="841" y="514" width="7" height="30" rx="3" fill="#A58BCB" stroke="none" stroke-width="1" />
+<text x="865" y="522" font-size="17" font-weight="650" text-anchor="start" fill="#63478D" >LangSmith Trace</text>
+<text x="865" y="547" font-size="14" font-weight="400" text-anchor="start" fill="#857398" >记录调用、输入与模型输出 · 不存会话</text>
+<rect x="823" y="574" width="381" height="63" rx="14" fill="#FFFFFF" stroke="#D9CDEB" stroke-width="1.4" />
+<rect x="841" y="590" width="7" height="30" rx="3" fill="#A58BCB" stroke="none" stroke-width="1" />
+<text x="865" y="598" font-size="17" font-weight="650" text-anchor="start" fill="#63478D" >agent.get_state(config)</text>
+<text x="865" y="622" font-size="14" font-weight="400" text-anchor="start" fill="#857398" >按 thread_id 查看已保存的状态</text>
+<path d="M 699 595 L 817 605" fill="none" stroke="#8B72BC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 7" marker-end="url(#arrowPurple)"/>
+<rect x="50" y="700" width="1179" height="41" rx="12" fill="#EEF3F9" stroke="none" stroke-width="1" />
+<text x="72" y="727" font-size="15" font-weight="450" text-anchor="start" fill="#506A86" >注：本图为简化视图；实际执行中，LangGraph 可在多个步骤产生 Checkpoint，而非只在最终回复后保存一次。</text>
+</svg>

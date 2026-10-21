@@ -1,0 +1,32 @@
+%% 第四章 Agent Memory | 可编辑 Mermaid 源码
+%% SVG 成品经过版式优化；重新由 Mermaid 渲染时，自动布局可能有所差异。
+flowchart LR
+    subgraph AGENT["Agent / LangGraph · 主执行链"]
+        direction LR
+        INPUT["用户消息 + thread_id"] --> LOAD["恢复当前线程状态"]
+        LOAD --> CONTEXT["历史 messages + 本轮消息"]
+        CONTEXT --> MODEL["Gemini 生成回答"]
+        MODEL --> UPDATE["更新 AgentState"]
+        UPDATE --> OUTPUT["返回 Agent 回复"]
+    end
+
+    CP[("InMemorySaver · Checkpoint<br/>按 thread_id 隔离")]
+    CP -. "读取该线程历史" .-> LOAD
+    UPDATE -. "保存状态快照" .-> CP
+
+    INSPECT["agent.get_state(config)<br/>查看当前线程状态"]
+    TRACE["LangSmith Trace<br/>观察运行过程，不负责记忆"]
+    CP -. "状态查询" .-> INSPECT
+    MODEL -. "执行追踪" .-> TRACE
+
+    NOTE["当前进程内存保存<br/>进程重启后不可恢复"]
+    CP -.- NOTE
+
+    classDef entry fill:#E8F1FF,stroke:#4384D8,color:#1C4F9A
+    classDef process fill:#FFFFFF,stroke:#A4BFDF,color:#243852
+    classDef storage fill:#E9F8F0,stroke:#37A477,color:#146645
+    classDef observe fill:#F3EEFF,stroke:#9984CF,color:#5A4790
+    class INPUT,OUTPUT entry
+    class LOAD,CONTEXT,MODEL,UPDATE process
+    class CP,NOTE storage
+    class TRACE,INSPECT observe
