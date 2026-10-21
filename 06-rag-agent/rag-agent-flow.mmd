@@ -1,0 +1,28 @@
+%% 第六章：RAG Agent 执行架构，可编辑 Mermaid 源码
+%% 展示建库与提问两阶段。工具结果需要回到 Agent 产生最终回答。
+flowchart LR
+    subgraph BUILD["阶段一：建库 / Indexing"]
+        DOC["本地 Markdown 文档"] --> LOAD["读取 + 来源 Metadata"]
+        LOAD --> SPLIT["RecursiveCharacterTextSplitter"]
+        SPLIT --> EMB["Gemini Embedding"]
+        EMB --> STORE[("InMemoryVectorStore")]
+    end
+
+    subgraph ASK["阶段二：提问 / Retrieval & Generation"]
+        USER["用户问题"] --> AGENT["LangChain Agent / Gemini"]
+        AGENT -->|"AIMessage.tool_calls"| TOOL["search_knowledge"]
+        TOOL -->|"相似度检索"| STORE
+        STORE -->|"Top-K"| EVID["原文片段 + source + chunk_id"]
+        EVID -->|"ToolMessage"| AGENT
+        AGENT --> ANSWER["有证据：答案 + 引用 / 无证据：明确说明"]
+    end
+
+    AGENT -.-> TRACE["LangSmith Trace：调用 / Token / Tool Run"]
+    TOOL -.-> TRACE
+
+    classDef ingestion fill:#e7f2fd,stroke:#3b82b6,color:#183c67
+    classDef memory fill:#e9f8f1,stroke:#32845f,color:#15533c
+    classDef query fill:#f3effd,stroke:#9171c7,color:#533b84
+    class DOC,LOAD,SPLIT,EMB ingestion
+    class STORE,EVID memory
+    class USER,AGENT,TOOL,ANSWER query
