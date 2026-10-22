@@ -1,0 +1,22 @@
+flowchart LR
+    START((START)) --> CLASSIFY["classify：工单分类<br/>离线规则 / Gemini"]
+    CLASSIFY -->|account| ACCOUNT["handle_account<br/>账户建议"]
+    CLASSIFY -->|payment| PAYMENT["handle_payment<br/>支付建议"]
+    CLASSIFY -->|logistics| LOGISTICS["handle_logistics<br/>物流建议"]
+    CLASSIFY -->|manual / 歧义| MANUAL["handle_manual<br/>转人工复核"]
+    ACCOUNT --> FINAL["finalize：校验路径<br/>填写处理状态"]
+    PAYMENT --> FINAL
+    LOGISTICS --> FINAL
+    MANUAL --> FINAL
+    FINAL --> ENDNODE((END))
+
+    classDef io fill:#DBEAFE,stroke:#2563EB,color:#1E40AF
+    classDef decision fill:#F3E8FF,stroke:#7C3AED,color:#5B21B6
+    classDef process fill:#E2E8F0,stroke:#64748B,color:#0F172A
+    classDef fallback fill:#FEF3C7,stroke:#D97706,color:#92400E
+    classDef final fill:#DCFCE7,stroke:#16A34A,color:#166534
+    class START,ENDNODE io
+    class CLASSIFY decision
+    class ACCOUNT,PAYMENT,LOGISTICS process
+    class MANUAL fallback
+    class FINAL final

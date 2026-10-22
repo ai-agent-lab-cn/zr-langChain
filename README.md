@@ -20,8 +20,8 @@
 | 03 | [Structured Output：结构化输出](./03-structured-output/) | ✅ 已完成 |
 | 04 | [Agent Memory：记忆机制](./04-agent-memory/) | ✅ 已完成 |
 | 05 | [MCP：工具集成](./05-mcp-agent/) | ✅ 已完成 |
-| 06 | RAG Agent：检索增强生成 | 规划中 |
-| 07 | LangGraph：工作流编排 | 规划中 |
+| 06 | [RAG Agent：检索增强生成](./06-rag-agent/) | ✅ 已完成 |
+| 07 | [LangGraph：工作流编排](./07-langgraph-workflow/) | ✅ 已完成 |
 
 ## Quickstart
 
