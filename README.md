@@ -18,8 +18,8 @@
 | 01 | [基础 AI Agent 入门实战](./01-basic-agent/) | ✅ 已完成 |
 | 02 | [Multi-Tool Agent：多工具调用](./02-multi-tool-agent/) | ✅ 已完成 |
 | 03 | [Structured Output：结构化输出](./03-structured-output/) | ✅ 已完成 |
-| 04 | Agent Memory：记忆机制 | 规划中 |
-| 05 | MCP：工具集成 | 规划中 |
+| 04 | [Agent Memory：记忆机制](./04-agent-memory/) | ✅ 已完成 |
+| 05 | [MCP：工具集成](./05-mcp-agent/) | ✅ 已完成 |
 | 06 | RAG Agent：检索增强生成 | 规划中 |
 | 07 | LangGraph：工作流编排 | 规划中 |
 
