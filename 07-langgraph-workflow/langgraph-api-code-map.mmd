@@ -1,0 +1,10 @@
+flowchart TD
+    STATE["StateGraph(TicketState)<br/>建立共享 State 的图构建器"]
+    NODE["add_node(name, callable)<br/>注册 classify、handle_*、finalize 等节点"]
+    STARTEDGE["add_edge(START, 'classify')<br/>指定工作流入口"]
+    ROUTE["add_conditional_edges('classify', select_branch, BRANCH_NODE)<br/>按 category 连接四条条件分支"]
+    ENDEDGE["add_edge(branch, 'finalize') / add_edge('finalize', END)<br/>让分支汇合并结束"]
+    COMPILE["compile()<br/>把构建器转换为可执行 Graph"]
+    EXEC["graph.ainvoke() / graph.astream()<br/>执行并返回最终 State / 观察 State 快照"]
+
+    STATE --> NODE --> STARTEDGE --> ROUTE --> ENDEDGE --> COMPILE --> EXEC

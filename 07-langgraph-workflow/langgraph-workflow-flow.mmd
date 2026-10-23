@@ -1,22 +1,21 @@
-flowchart LR
-    START((START)) --> CLASSIFY["classify：工单分类<br/>离线规则 / Gemini"]
-    CLASSIFY -->|account| ACCOUNT["handle_account<br/>账户建议"]
-    CLASSIFY -->|payment| PAYMENT["handle_payment<br/>支付建议"]
-    CLASSIFY -->|logistics| LOGISTICS["handle_logistics<br/>物流建议"]
-    CLASSIFY -->|manual / 歧义| MANUAL["handle_manual<br/>转人工复核"]
-    ACCOUNT --> FINAL["finalize：校验路径<br/>填写处理状态"]
+flowchart TD
+    INPUT["初始 State<br/>ticket：用户工单；steps：空列表"]
+    CLASSIFY["classify(state, config)<br/>离线：rule_route()；在线：classifier.ainvoke()<br/>写入 category / reason / steps"]
+    ROUTE{"select_branch(state)<br/>读取 category；不写入 State<br/>由 add_conditional_edges() 执行条件路由"}
+    ACCOUNT["handle_account(state)<br/>账户处理建议"]
+    PAYMENT["handle_payment(state)<br/>支付/退款处理建议"]
+    LOGISTICS["handle_logistics(state)<br/>物流/配送处理建议"]
+    MANUAL["handle_manual(state)<br/>模拟待人工复核；不执行 interrupt()"]
+    FINAL["finalize(state)<br/>校验分支并写入 status / steps"]
+    ENDNODE(["END：返回合并后的 State"])
+
+    INPUT --> CLASSIFY --> ROUTE
+    ROUTE -->|account| ACCOUNT
+    ROUTE -->|payment| PAYMENT
+    ROUTE -->|logistics| LOGISTICS
+    ROUTE -->|manual / 歧义| MANUAL
+    ACCOUNT --> FINAL
     PAYMENT --> FINAL
     LOGISTICS --> FINAL
     MANUAL --> FINAL
-    FINAL --> ENDNODE((END))
-
-    classDef io fill:#DBEAFE,stroke:#2563EB,color:#1E40AF
-    classDef decision fill:#F3E8FF,stroke:#7C3AED,color:#5B21B6
-    classDef process fill:#E2E8F0,stroke:#64748B,color:#0F172A
-    classDef fallback fill:#FEF3C7,stroke:#D97706,color:#92400E
-    classDef final fill:#DCFCE7,stroke:#16A34A,color:#166534
-    class START,ENDNODE io
-    class CLASSIFY decision
-    class ACCOUNT,PAYMENT,LOGISTICS process
-    class MANUAL fallback
-    class FINAL final
+    FINAL --> ENDNODE
