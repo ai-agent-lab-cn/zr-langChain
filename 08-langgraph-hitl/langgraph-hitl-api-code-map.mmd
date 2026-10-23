@@ -1,0 +1,12 @@
+flowchart TD
+    STATE["StateGraph(TicketState)<br/>声明共享 State：ticket、draft、review_action、steps"]
+    NODE["add_node(name, callable)<br/>注册 prepare_draft、human_review、approve / reject / edit、finalize"]
+    EDGE["add_edge(START, 'prepare_draft')<br/>add_edge('prepare_draft', 'human_review')<br/>定义进入审核前的固定路径"]
+    ROUTE["add_conditional_edges('human_review', choose_review_branch, ...)<br/>根据人工 review_action 三选一"]
+    END_EDGE["add_edge(name, 'finalize') → add_edge('finalize', END)<br/>审核分支合流并结束"]
+    COMPILE["compile(checkpointer=InMemorySaver())<br/>编译图 + 启用进程内 Checkpoint"]
+    PAUSE["graph.ainvoke(initial_state, config=cfg)<br/>执行到 human_review 内的 interrupt(payload)，暂停"]
+    INSPECT["graph.aget_state(config)<br/>读取已保存的 State 和待恢复节点 next"]
+    RESUME["graph.ainvoke(Command(resume=decision), config)<br/>同一 thread_id 恢复，并按条件边完成"]
+
+    STATE --> NODE --> EDGE --> ROUTE --> END_EDGE --> COMPILE --> PAUSE --> INSPECT --> RESUME

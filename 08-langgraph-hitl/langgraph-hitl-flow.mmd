@@ -1,0 +1,27 @@
+flowchart TD
+    START(["START：输入 ticket / steps=[]"])
+    PREPARE["prepare_draft(state, config)<br/>offline_proposal() 或 classifier.ainvoke()<br/>写入 category、draft、awaiting_review、steps"]
+    REVIEW["human_review(state)<br/>interrupt(payload)：发出审核请求并暂停"]
+    CHECKPOINT[("InMemorySaver<br/>保存线程 State 和恢复位置")]
+    HUMAN{{"外部人工/脚本审核<br/>approve、reject、edit"}}
+    RESUME["Command(resume=decision)<br/>使用同一 thread_id 再次 ainvoke()"]
+    BRANCH{"choose_review_branch(state)<br/>读取 review_action；条件路由"}
+    APPROVE["approve(state)<br/>final_reply = draft"]
+    REJECT["reject(state)<br/>拒绝原草稿"]
+    EDIT["edit(state)<br/>final_reply = edited_reply"]
+    FINALIZE["finalize(state)<br/>校验路径和状态，追加 steps"]
+    END(["END：返回最终 State"])
+
+    START --> PREPARE --> REVIEW
+    REVIEW -. "interrupt 时保存" .-> CHECKPOINT
+    REVIEW -. "__interrupt__ 暂停负载" .-> HUMAN
+    HUMAN -. "人工审核决定" .-> RESUME
+    RESUME -. "读取 Checkpoint，重跑 human_review 节点" .-> REVIEW
+    REVIEW -->|"恢复后返回 review_action"| BRANCH
+    BRANCH -->|approve| APPROVE
+    BRANCH -->|reject| REJECT
+    BRANCH -->|edit| EDIT
+    APPROVE --> FINALIZE
+    REJECT --> FINALIZE
+    EDIT --> FINALIZE
+    FINALIZE --> END

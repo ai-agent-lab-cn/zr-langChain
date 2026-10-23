@@ -22,6 +22,13 @@
 | 05 | [MCP：工具集成](./05-mcp-agent/) | ✅ 已完成 |
 | 06 | [RAG Agent：检索增强生成](./06-rag-agent/) | ✅ 已完成 |
 | 07 | [LangGraph：工作流编排](./07-langgraph-workflow/) | ✅ 已完成 |
+| 08 | [LangGraph：Human-in-the-loop 人工审核与断点恢复](./08-langgraph-hitl/) | ✅ 已完成 |
+| 09 | [LangGraph：Multi-Agent 多智能体协作](./09-langgraph-multi-agent/) | ⏳ 待开始 |
+| 10 | Context Engineering：上下文工程与记忆管理 | 📋 计划中 |
+| 11 | Agent Reliability：可靠性、安全与异常治理 | 📋 计划中 |
+| 12 | Agent Evaluation：评测与可观测性 | 📋 计划中 |
+| 13 | Agent Production：生产化部署与工程实践 | 📋 计划中 |
+| 14 | 综合实战：企业级工单 Copilot | 📋 计划中 |
 
 ## Quickstart
 

@@ -15,6 +15,8 @@ dependencies = [
     "langchain-text-splitters>=1.0.0",
     "numpy>=2.4.6",
     "langgraph>=1.0,<2",
+    "langsmith>=0.14.11",
+    "langchain-deepseek>=1.1.1",
 ]
 
 [tool.uv]

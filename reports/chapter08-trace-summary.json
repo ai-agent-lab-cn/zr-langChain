@@ -1,0 +1,550 @@
+{
+  "schema_version": 2,
+  "chapter": "08",
+  "project": "zr-langChain",
+  "batch_id": "chapter08-a558b6d4962047f5",
+  "trace_count": 10,
+  "llm_calls": 5,
+  "token_totals_known": {
+    "input": 2113,
+    "output": 565,
+    "total": 2678,
+    "reasoning": 0
+  },
+  "tokens_partial": true,
+  "root_runs": [
+    {
+      "name": "chapter08-approve-pause",
+      "root_id": "01a167b5-997e-7dc2-ae13-0deb91283250",
+      "trace_id": "01a167b5-997e-7dc2-ae13-0deb91283250",
+      "start_time": "2026-10-23T07:41:56.990823+00:00",
+      "end_time": "2026-10-23T07:41:58.833773+00:00",
+      "case": "approve",
+      "phase": "pause",
+      "run_count": 6,
+      "llm_calls": 1,
+      "nodes": [
+        "human_review",
+        "prepare_draft"
+      ],
+      "tokens": {
+        "input": 422,
+        "output": 120,
+        "total": 542,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 1
+      },
+      "errors": 0,
+      "raw_errors": 1,
+      "interrupt_candidates": 1,
+      "expected_interrupts": 1,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft"
+      ],
+      "status": "awaiting_review",
+      "review_action": null,
+      "thread_hash": "5034c617ed27",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-approve-resume",
+      "root_id": "01a167b5-a0b2-7613-b864-79bff7dfb186",
+      "trace_id": "01a167b5-a0b2-7613-b864-79bff7dfb186",
+      "start_time": "2026-10-23T07:41:58.834929+00:00",
+      "end_time": "2026-10-23T07:41:58.837423+00:00",
+      "case": "approve",
+      "phase": "resume",
+      "run_count": 5,
+      "llm_calls": 0,
+      "nodes": [
+        "approve",
+        "finalize",
+        "human_review"
+      ],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "errors": 0,
+      "raw_errors": 0,
+      "interrupt_candidates": 0,
+      "expected_interrupts": 0,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft",
+        "human_review",
+        "approve",
+        "finalize"
+      ],
+      "status": "approved",
+      "review_action": "approve",
+      "thread_hash": "5034c617ed27",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-reject-pause",
+      "root_id": "01a167b5-b83c-7a82-a239-b574a369859a",
+      "trace_id": "01a167b5-b83c-7a82-a239-b574a369859a",
+      "start_time": "2026-10-23T07:42:04.860244+00:00",
+      "end_time": "2026-10-23T07:42:06.537558+00:00",
+      "case": "reject",
+      "phase": "pause",
+      "run_count": 6,
+      "llm_calls": 1,
+      "nodes": [
+        "human_review",
+        "prepare_draft"
+      ],
+      "tokens": {
+        "input": 423,
+        "output": 127,
+        "total": 550,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 1
+      },
+      "errors": 0,
+      "raw_errors": 1,
+      "interrupt_candidates": 1,
+      "expected_interrupts": 1,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft"
+      ],
+      "status": "awaiting_review",
+      "review_action": null,
+      "thread_hash": "36939670c101",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-reject-resume",
+      "root_id": "01a167b5-beca-7350-a62f-186e26bf4025",
+      "trace_id": "01a167b5-beca-7350-a62f-186e26bf4025",
+      "start_time": "2026-10-23T07:42:06.538098+00:00",
+      "end_time": "2026-10-23T07:42:06.540347+00:00",
+      "case": "reject",
+      "phase": "resume",
+      "run_count": 5,
+      "llm_calls": 0,
+      "nodes": [
+        "finalize",
+        "human_review",
+        "reject"
+      ],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "errors": 0,
+      "raw_errors": 0,
+      "interrupt_candidates": 0,
+      "expected_interrupts": 0,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft",
+        "human_review",
+        "reject",
+        "finalize"
+      ],
+      "status": "rejected",
+      "review_action": "reject",
+      "thread_hash": "36939670c101",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-edit-pause",
+      "root_id": "01a167b5-becd-7153-b4b8-e762d6e8d3b3",
+      "trace_id": "01a167b5-becd-7153-b4b8-e762d6e8d3b3",
+      "start_time": "2026-10-23T07:42:06.541255+00:00",
+      "end_time": "2026-10-23T07:42:07.987867+00:00",
+      "case": "edit",
+      "phase": "pause",
+      "run_count": 6,
+      "llm_calls": 1,
+      "nodes": [
+        "human_review",
+        "prepare_draft"
+      ],
+      "tokens": {
+        "input": 423,
+        "output": 102,
+        "total": 525,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 1
+      },
+      "errors": 0,
+      "raw_errors": 1,
+      "interrupt_candidates": 1,
+      "expected_interrupts": 1,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft"
+      ],
+      "status": "awaiting_review",
+      "review_action": null,
+      "thread_hash": "8a0b007572bc",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-edit-resume",
+      "root_id": "01a167b5-c474-77e2-84ac-7aa4c2c33682",
+      "trace_id": "01a167b5-c474-77e2-84ac-7aa4c2c33682",
+      "start_time": "2026-10-23T07:42:07.988674+00:00",
+      "end_time": "2026-10-23T07:42:07.992273+00:00",
+      "case": "edit",
+      "phase": "resume",
+      "run_count": 5,
+      "llm_calls": 0,
+      "nodes": [
+        "edit",
+        "finalize",
+        "human_review"
+      ],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "errors": 0,
+      "raw_errors": 0,
+      "interrupt_candidates": 0,
+      "expected_interrupts": 0,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft",
+        "human_review",
+        "edit",
+        "finalize"
+      ],
+      "status": "edited",
+      "review_action": "edit",
+      "thread_hash": "8a0b007572bc",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-isolation-A-pause",
+      "root_id": "01a167b5-c47a-7183-a167-b9bbc0712b91",
+      "trace_id": "01a167b5-c47a-7183-a167-b9bbc0712b91",
+      "start_time": "2026-10-23T07:42:07.994567+00:00",
+      "end_time": "2026-10-23T07:42:09.628351+00:00",
+      "case": "isolation-A",
+      "phase": "pause",
+      "run_count": 6,
+      "llm_calls": 1,
+      "nodes": [
+        "human_review",
+        "prepare_draft"
+      ],
+      "tokens": {
+        "input": 422,
+        "output": 99,
+        "total": 521,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 1
+      },
+      "errors": 0,
+      "raw_errors": 1,
+      "interrupt_candidates": 1,
+      "expected_interrupts": 1,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft"
+      ],
+      "status": "awaiting_review",
+      "review_action": null,
+      "thread_hash": "a99f9f12616a",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-isolation-B-pause",
+      "root_id": "01a167b5-c47b-7062-bded-cbbe7fa9de64",
+      "trace_id": "01a167b5-c47b-7062-bded-cbbe7fa9de64",
+      "start_time": "2026-10-23T07:42:07.995858+00:00",
+      "end_time": "2026-10-23T07:42:09.654624+00:00",
+      "case": "isolation-B",
+      "phase": "pause",
+      "run_count": 6,
+      "llm_calls": 1,
+      "nodes": [
+        "human_review",
+        "prepare_draft"
+      ],
+      "tokens": {
+        "input": 423,
+        "output": 117,
+        "total": 540,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 1
+      },
+      "errors": 0,
+      "raw_errors": 1,
+      "interrupt_candidates": 1,
+      "expected_interrupts": 1,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft"
+      ],
+      "status": "awaiting_review",
+      "review_action": null,
+      "thread_hash": "2f8e29e63a46",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-isolation-B-resume",
+      "root_id": "01a167b5-caf7-7b32-93db-feab4755acec",
+      "trace_id": "01a167b5-caf7-7b32-93db-feab4755acec",
+      "start_time": "2026-10-23T07:42:09.655813+00:00",
+      "end_time": "2026-10-23T07:42:09.659183+00:00",
+      "case": "isolation-B",
+      "phase": "resume",
+      "run_count": 5,
+      "llm_calls": 0,
+      "nodes": [
+        "edit",
+        "finalize",
+        "human_review"
+      ],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "errors": 0,
+      "raw_errors": 0,
+      "interrupt_candidates": 0,
+      "expected_interrupts": 0,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft",
+        "human_review",
+        "edit",
+        "finalize"
+      ],
+      "status": "edited",
+      "review_action": "edit",
+      "thread_hash": "2f8e29e63a46",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    },
+    {
+      "name": "chapter08-isolation-A-resume",
+      "root_id": "01a167b5-cafb-7e10-bdfb-f223e3b6226a",
+      "trace_id": "01a167b5-cafb-7e10-bdfb-f223e3b6226a",
+      "start_time": "2026-10-23T07:42:09.659915+00:00",
+      "end_time": "2026-10-23T07:42:09.662426+00:00",
+      "case": "isolation-A",
+      "phase": "resume",
+      "run_count": 5,
+      "llm_calls": 0,
+      "nodes": [
+        "approve",
+        "finalize",
+        "human_review"
+      ],
+      "tokens": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "token_missing": {
+        "input": 0,
+        "output": 0,
+        "total": 0,
+        "reasoning": 0
+      },
+      "errors": 0,
+      "raw_errors": 0,
+      "interrupt_candidates": 0,
+      "expected_interrupts": 0,
+      "completed": true,
+      "unfinished_runs": 0,
+      "truncated": false,
+      "interrupt_observed": false,
+      "steps": [
+        "prepare_draft",
+        "human_review",
+        "approve",
+        "finalize"
+      ],
+      "status": "approved",
+      "review_action": "approve",
+      "thread_hash": "a99f9f12616a",
+      "batch_id": "chapter08-a558b6d4962047f5"
+    }
+  ],
+  "hitl_pairs": [
+    {
+      "case": "approve",
+      "pause_run_id": "01a167b5-997e-7dc2-ae13-0deb91283250",
+      "resume_run_id": "01a167b5-a0b2-7613-b864-79bff7dfb186",
+      "checks": [
+        "same_thread_id_verified",
+        "same_batch_verified",
+        "pause_before_resume_verified",
+        "expected_interrupt_verified",
+        "interrupt_observed",
+        "resume_review_node_observed",
+        "state_and_route_validated"
+      ],
+      "thread_pairing": "verified",
+      "complete": true
+    },
+    {
+      "case": "edit",
+      "pause_run_id": "01a167b5-becd-7153-b4b8-e762d6e8d3b3",
+      "resume_run_id": "01a167b5-c474-77e2-84ac-7aa4c2c33682",
+      "checks": [
+        "same_thread_id_verified",
+        "same_batch_verified",
+        "pause_before_resume_verified",
+        "expected_interrupt_verified",
+        "interrupt_observed",
+        "resume_review_node_observed",
+        "state_and_route_validated"
+      ],
+      "thread_pairing": "verified",
+      "complete": true
+    },
+    {
+      "case": "isolation-A",
+      "pause_run_id": "01a167b5-c47a-7183-a167-b9bbc0712b91",
+      "resume_run_id": "01a167b5-cafb-7e10-bdfb-f223e3b6226a",
+      "checks": [
+        "same_thread_id_verified",
+        "same_batch_verified",
+        "pause_before_resume_verified",
+        "isolation_threads_distinct_verified",
+        "expected_interrupt_verified",
+        "interrupt_observed",
+        "resume_review_node_observed",
+        "state_and_route_validated"
+      ],
+      "thread_pairing": "verified",
+      "complete": true
+    },
+    {
+      "case": "isolation-B",
+      "pause_run_id": "01a167b5-c47b-7062-bded-cbbe7fa9de64",
+      "resume_run_id": "01a167b5-caf7-7b32-93db-feab4755acec",
+      "checks": [
+        "same_thread_id_verified",
+        "same_batch_verified",
+        "pause_before_resume_verified",
+        "isolation_threads_distinct_verified",
+        "expected_interrupt_verified",
+        "interrupt_observed",
+        "resume_review_node_observed",
+        "state_and_route_validated"
+      ],
+      "thread_pairing": "verified",
+      "complete": true
+    },
+    {
+      "case": "reject",
+      "pause_run_id": "01a167b5-b83c-7a82-a239-b574a369859a",
+      "resume_run_id": "01a167b5-beca-7350-a62f-186e26bf4025",
+      "checks": [
+        "same_thread_id_verified",
+        "same_batch_verified",
+        "pause_before_resume_verified",
+        "expected_interrupt_verified",
+        "interrupt_observed",
+        "resume_review_node_observed",
+        "state_and_route_validated"
+      ],
+      "thread_pairing": "verified",
+      "complete": true
+    }
+  ],
+  "warnings": [
+    "chapter08-isolation-B-pause 有 1 个 LLM Run 缺少 reasoning Token 计量",
+    "chapter08-isolation-A-pause 有 1 个 LLM Run 缺少 reasoning Token 计量",
+    "chapter08-edit-pause 有 1 个 LLM Run 缺少 reasoning Token 计量",
+    "chapter08-reject-pause 有 1 个 LLM Run 缺少 reasoning Token 计量",
+    "chapter08-approve-pause 有 1 个 LLM Run 缺少 reasoning Token 计量"
+  ],
+  "failures": [],
+  "status": "review"
+}
