@@ -1,10 +1,12 @@
 """第09章：只读验收已知 run_id，不发送任何模型请求，不导出原始对话。"""
 import argparse
+import asyncio
 import json
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 from langsmith import Client
+from langsmith_reader import fetch_trace
 
 
 def audit(root, runs, case):
@@ -53,18 +55,24 @@ def audit(root, runs, case):
                       'name': r.name, 'type': r.run_type} for r in runs]}
 
 
+async def verify(client, evidence, *, project):
+    project_record = await client.aread_project(project_name=project)
+    result = []
+    for item in evidence:
+        assert item['offline'] is False, '不接受离线证据'
+        root, runs = await fetch_trace(client, project_id=str(project_record.id), trace_id=item['run_id'])
+        result.append(audit(root, runs, item['case']))
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('evidence'); p.add_argument('output')
+    p.add_argument('--project', help='LangSmith项目名称，默认读取根目录.env')
     args = p.parse_args()
     load_dotenv(Path(__file__).resolve().parents[1] / '.env')
-    client = Client()
-    result = []
-    for item in json.loads(Path(args.evidence).read_text()):
-        assert item['offline'] is False, '不接受离线证据'
-        root = client.read_run(item['run_id'])
-        runs = list(client.list_runs(trace_id=item['run_id'], limit=100))
-        result.append(audit(root, runs, item['case']))
+    project = args.project or os.getenv('LANGSMITH_PROJECT') or os.getenv('LANGCHAIN_PROJECT') or 'default'
+    result = asyncio.run(verify(Client(), json.loads(Path(args.evidence).read_text()), project=project))
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
     for item in result:
         print(item['case'], item['status'], 'LLM calls:', item['llm_calls'], 'tokens:', item['tokens'])

@@ -5,12 +5,14 @@ from pathlib import Path
 import sys
 import unittest
 from uuid import uuid4
+from types import SimpleNamespace
 
 MODULE_PATH = Path(__file__).resolve().parent.parent / "scripts" / "langsmith_report.py"
 spec = importlib.util.spec_from_file_location("langsmith_report", MODULE_PATH)
 reporter = importlib.util.module_from_spec(spec)
 assert spec and spec.loader
 sys.modules[spec.name] = reporter
+sys.path.insert(0, str(MODULE_PATH.parent))
 spec.loader.exec_module(reporter)
 
 
@@ -42,6 +44,30 @@ def fixture(case="approve", *, thread="a-unique-thread", online=True):
                        fake_run(action, trace=resume["id"], parent=resume["id"]),
                        fake_run("finalize", trace=resume["id"], parent=resume["id"])]
     return [reporter.summarize_trace(pause, pause_children, "08"), reporter.summarize_trace(resume, resume_children, "08")]
+
+
+class NewAPIClient:
+    def __init__(self, roots, traces):
+        self.roots, self.trace_rows = roots, traces
+        self.runs = self
+        self.traces = self
+
+    async def aread_project(self, **kwargs):
+        return SimpleNamespace(id="test-project")
+
+    @staticmethod
+    def v2(row):
+        parents = [row['parent_run_id']] if row.get('parent_run_id') else []
+        return {**row, 'run_type': row['run_type'].upper(), 'parent_run_ids': parents}
+
+    def query(self, **kwargs):
+        async def pages():
+            for row in self.roots:
+                yield self.v2(row)
+        return pages()
+
+    async def list_runs(self, trace_id, **kwargs):
+        return SimpleNamespace(items=[self.v2(row) for row in self.trace_rows[trace_id]])
 
 
 class TestTraceAnalyzer(unittest.TestCase):
@@ -114,12 +140,8 @@ class TestBatchFiltering(unittest.TestCase):
     def test_remote_batch_filter_ignores_other_batches(self):
         good = fake_run("chapter08-approve-pause", meta={"batch_id": "chapter08-yes"})
         wrong = fake_run("chapter08-edit-pause", meta={"batch_id": "chapter08-no"})
-        class Client:
-            def list_runs(self, **kw):
-                if kw.get("is_root"):
-                    return [good, wrong]
-                return [good] if kw.get("trace_id") == good["id"] else [wrong]
-        rows, limited = reporter.load_remote(Client(), project="demo", chapter="08",
+        client = NewAPIClient([good, wrong], {good['id']: [good], wrong['id']: [wrong]})
+        rows, limited = reporter.load_remote(client, project="demo", chapter="08",
             since=datetime(2026, 10, 23, tzinfo=timezone.utc), max_roots=10, max_spans=10,
             batch_id="chapter08-yes")
         self.assertEqual(len(rows), 1)
@@ -196,13 +218,11 @@ class TestReadBounds(unittest.TestCase):
 
     def test_span_overflow_refuses_partial_report(self):
         root = fake_run("chapter08-approve-pause")
-        class Client:
-            def list_runs(self, **kw):
-                if kw.get("is_root"):
-                    return iter([root])
-                return (fake_run("node", trace=root["id"]) for _ in range(201))
+        children = [fake_run("node", trace=root['id'], parent=root['id']) for _ in range(200)]
+        client = NewAPIClient([root], {root['id']: [root, *children]})
         with self.assertRaises(reporter.TraceReadLimitExceeded):
-            reporter.load_remote(Client(), project="demo", chapter="08", since=datetime.now(timezone.utc), max_roots=100, max_spans=200)
+            reporter.load_remote(client, project="demo", chapter="08", since=datetime.now(timezone.utc), max_roots=100, max_spans=200)
+
 
 
 class TestAcceptanceBoundaries(unittest.TestCase):

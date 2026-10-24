@@ -81,7 +81,9 @@ uv run python scripts/verify_chapter09_trace.py .runs/ch09-online.json .runs/ch0
 
 验收边界：在线仅覆盖上述两个固定请求，不代表任意请求正确率。未知请求的澄清、空请求和未配对工具调用有离线测试。Handoff 为单轮同图移交；InMemorySaver 仅进程内保存，不提供跨进程持久化或完整多轮客服产品。示例不执行账号或物流业务操作。LangSmith 只累计 LLM runs 的 Token，避免把父 Graph 的聚合统计重复计入；Token 不等同于费用。
 
-当前 SDK 的 `read_run/list_runs` 可用但发出弃用提示（提示将于2027-01-31后移除）；Trace 验收通过，未来升级需迁移至新 SDK 接口。
+最初验收使用旧版 `read_run/list_runs`，历史日志中的弃用提示保留。当前本地已迁移到新异步 `runs.query/traces.list_runs`，使用原有两条 Trace 复核通过，无新增 DeepSeek 调用。参见 [迁移验收记录](../reports/langsmith-smithdb-migration.md)。
+
+`reports/chapter09/` 中的公开证据已匿名化，不能直接用于远程重查；真实 UUID 证据仅保存在 Git 忽略的 `.runs/chapter09-private-evidence/`。
 
 ## 五、参考
 

@@ -8,13 +8,14 @@
 
 设计：一个根 Run 代表一次 Graph 调用，子 Run 中 run_type='llm' 才算 LLM 调用；
 避免把 Graph / RunnableSequence / Parser 的聚合 token 再加一次。
-注意：LangSmith Client.list_runs 在当前 SDK 可用，但官方已提示未来将迁移至 runs.query。
-服务端单次 /runs/query 请求的 limit 最大为 100；不要将本地上限直接传入 limit。
+使用新异步 runs.query 扫描根 Run，traces.list_runs 读取精确调用树。
+字段归一化由 langsmith_reader 完成；不调用旧版 read_run/list_runs。
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from itertools import islice
@@ -25,6 +26,8 @@ from pathlib import Path
 import re
 import sys
 from typing import Any, Iterable
+
+from langsmith_reader import TraceReadLimitExceeded, fetch_roots, fetch_trace
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REPORTS = ROOT / "reports"
@@ -426,10 +429,6 @@ def markdown(report: dict[str, Any]) -> str:
     return "\n".join(header)
 
 
-class TraceReadLimitExceeded(RuntimeError):
-    """Trace 超出本地完整性上限时，禁止用部分数据生成 PASS 报告。"""
-
-
 def collect_bounded(iterator: Iterable[Any], cap: int) -> tuple[list[Any], bool]:
     """SDK 自动分页；本地多读 1 条，用来判断是否真的超过 cap。
 
@@ -442,11 +441,11 @@ def collect_bounded(iterator: Iterable[Any], cap: int) -> tuple[list[Any], bool]
     return items[:cap], len(items) > cap
 
 
-def load_remote(client: Any, *, project: str, chapter: str, since: datetime, max_roots: int, max_spans: int, batch_id: str | None = None) -> tuple[list[dict[str, Any]], bool]:
-    """只读拉取：根 Run 与子 Run 都依赖 SDK 分页，分析上限在本地判断。"""
-    # limit=None（即省略参数）让 SDK 自动分页，避免把 200 等值作为 API limit。
-    root_iter = client.list_runs(project_name=project, is_root=True, start_time=since)
-    all_roots, scan_limited = collect_bounded(root_iter, max_roots)
+async def load_remote_async(client: Any, *, project: str, chapter: str, since: datetime, max_roots: int, max_spans: int, batch_id: str | None = None) -> tuple[list[dict[str, Any]], bool]:
+    """只读新 API：显式时间窗口扫描根 Run，再按精确 Trace ID 获取完整树。"""
+    project_record = await client.aread_project(project_name=project)
+    project_id = str(value(project_record, "id"))
+    all_roots, scan_limited = await fetch_roots(client, project_id=project_id, since=since, max_roots=max_roots)
     roots = []
     for root in all_roots:
         name = str(value(root, "name") or "")
@@ -457,21 +456,16 @@ def load_remote(client: Any, *, project: str, chapter: str, since: datetime, max
             roots.append(root)
     results = []
     for i, root in enumerate(roots, 1):
-        name = str(value(root, "name") or "")
-        print(f"[{i}/{len(roots)}] 查询 {name}", file=sys.stderr)
-        trace_id = value(root, "trace_id") or value(root, "id")
-        # 同样不传 limit；获取 max_spans + 1 条判断是否真实溢出，
-        # 而不是 len == max_spans 就误报（恰好满额仍然完整）。
-        span_iter = client.list_runs(project_name=project, trace_id=trace_id)
-        all_spans, spans_over_limit = collect_bounded(span_iter, max_spans)
-        if spans_over_limit:
-            raise TraceReadLimitExceeded(
-                f"Trace {trace_id} 子 Run 数超过本地上限 {max_spans}；"
-                "无法保证节点与 Token 统计完整。请提高 --max-spans 后重新查询。"
-            )
-        results.append(summarize_trace(root, all_spans, chapter, truncated=False))
-    # 根 Run 超限不静默标 PASS：summarize() 会标记 REVIEW。
+        print(f"[{i}/{len(roots)}] 查询 {value(root, 'name')}", file=sys.stderr)
+        trace_id = str(value(root, "trace_id") or value(root, "id"))
+        actual_root, spans = await fetch_trace(client, project_id=project_id, trace_id=trace_id, max_spans=max_spans)
+        results.append(summarize_trace(actual_root, spans, chapter, truncated=False))
     return results, scan_limited
+
+
+def load_remote(client: Any, **kwargs) -> tuple[list[dict[str, Any]], bool]:
+    """保留同步 CLI 入口；异步调用方直接使用 load_remote_async。"""
+    return asyncio.run(load_remote_async(client, **kwargs))
 
 
 def build_parser() -> argparse.ArgumentParser:

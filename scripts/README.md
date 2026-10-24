@@ -1,6 +1,6 @@
 # zrLangChain｜LangSmith Trace Analyzer
 
-项目级**只读 Trace 分析工具**，服务于 `07` 及后续章节，不需要逐条导出 LangSmith JSON。使用官方 Python SDK `Client.list_runs()` 拉取根 Run 和对应子 Run。只统计 `run_type='llm'` 的 Token，避免父 Graph/Chain 的聚合值重复计算。当前 `list_runs` 仍可用，但官方已标记为弃用，未来应迁移到 `runs.query`。
+项目级**只读 Trace 分析工具**，服务于 `07` 及后续章节，不需要逐条导出 LangSmith JSON。使用官方 Python SDK 新异步 `client.runs.query()` 查询根 Run，`client.traces.list_runs()` 按精确 Trace ID 读取完整调用树。`langsmith_reader.py` 显式选择验收字段、绑定 project_id，并将新版大写 run_type、parent_run_ids、token_details.raw 归一化。只统计 LLM Run 的 Token；缺失计量保留未知，不以0冒充。
 
 ## 1. 安装与配置
 
@@ -11,16 +11,17 @@ zr-langChain/
 ├── .env
 ├── pyproject.toml
 ├── scripts/
+│   ├── langsmith_reader.py
+│   ├── verify_chapter09_trace.py
 │   ├── langsmith_report.py
 │   └── README.md
 └── tests/
     └── test_langsmith_report.py
 ```
 
-在 VS Code 本地终端执行（通过 `uv add` 把 SDK 变为明确的项目依赖）：
+项目已声明 LangSmith 依赖，在 VS Code 本地终端同步现有环境：
 
 ```bash
-uv add langsmith
 uv sync
 ```
 
@@ -75,13 +76,14 @@ uv run python -m unittest discover -s tests -p 'test_langsmith_report.py' -v
 - `REVIEW`：数据不足、Token 缺失、无法核实线程配对或存在多批次 Run；不等价于测试通过。
 - `PASS`：当前可观测的规则通过，仍不代表生产级安全与人工流程已经完成验收。
 - `--strict`：存在失败项时返回退出码 1；适合 CI，但报告会先落盘。
-- `--max-roots` / `--max-spans`：防止无界查询；如果命中上限，报告会标注结果可能不完整。
+- `--max-roots`：根查询自动分页，多读1条确认超限，超限报告 REVIEW。
+- `--max-spans`：精确 Trace 接口返回完整 items 后检查本地分析上限；恰好等于上限可验收，超限拒绝分析。它不限制服务端单次响应体大小。缺根、缺父、跨 Trace 或祖先链不一致均拒绝分析。
 
 ## 5. 隐私与版本管理
 
 工具不会持久化原始 Trace。报告可能包含 Run 名称/ID、状态、节点路径和用量，不包含运行文本。使用本地 Git 提交时先复核生成报告，再决定是否公开。不要将 `.env`、API Key 或原始 Trace 上传到公开仓库。未经本地验证前，不能把这里的开发完成理解为已在你的 LangSmith 账号上完成在线验收。
 
-官方文档：[LangSmith `Client.list_runs` 参考](https://reference.langchain.com/python/langsmith/client/Client/list_runs) · [Trace 查询](https://docs.langchain.com/langsmith/trace-query-syntax)
+官方文档：[新 Run/Trace 读取](https://docs.langchain.com/langsmith/smithdb-sdk-migration-runs) · [新根 Run 查询](https://docs.langchain.com/langsmith/smithdb-sdk-migration-query-runs)
 
 ## 6. Experiment Reliability V1：错误分类与用例级断点验收
 
@@ -110,3 +112,27 @@ uv run python -m unittest discover -s tests -p 'test_*.py' -v
 `--resume-batch` 是**重新运行未通过的场景**，不是跨进程恢复已暂停的 HITL 节点。版本、模型不匹配时拒绝跳过旧 PASS。隔离场景被视为一个完整场景，任何中断都需要整体重试。
 
 请在仓库根目录的 `.gitignore` 加入 `.runs/`。`reports/` 下的脱敏验收报告如需公开提交，仍需人工复核；**不要提交 `.env` 或原始 Trace**。
+
+
+## 7. SmithDB 新接口迁移（2026-10-24）
+
+本地 `langsmith==0.14.11` 已支持本次新接口，无新增依赖，也未升级锁文件。
+CLI 参数保持兼容；报告工具同步入口内部运行异步读取，异步调用方可直接使用 `load_remote_async`。
+
+- 根查询显式传 `project_ids`、`min_start_time/max_start_time` 和 `selects`，避免默认24小时窗口意外漏查旧记录。
+- 精确 Trace 直接使用 `traces.list_runs(trace_id, project_id=...)`，不重复单独读取根 Run，也不调用旧 `read_run/list_runs`。
+- 原本的章节、批次、HITL、消息及 Token 判定保持不变；父子关系使用 `parent_run_ids` 最近的最后一项。
+- 新版 Graph Token 不是子调用合计；所有统计继续只累加 LLM Run。不上传原始对话，不生成公开 Trace URL。
+
+第09章复核既有 Trace：
+
+```bash
+# 真实UUID证据只保存在Git忽略目录；reports/chapter09/为公开匿名版本，不能直接重查。
+uv run python scripts/verify_chapter09_trace.py \
+  .runs/chapter09-private-evidence/online-evidence.json .runs/ch09-smithdb-trace.json
+```
+
+两项精确验收 PASS，与旧结果的完整调用树、消息配对、5次LLM与1,988 tokens一致。
+通用报告的七天窗口真实读取成功，但返回 REVIEW：根扫描达到100条上限，5个LLM缺少reasoning计量。
+不能将 REVIEW 写为完整 PASS；需要完整根扫描时调整窗口或上限，不能将缺失 reasoning 当成已核实0。
+详细记录见 [迁移验收](../reports/langsmith-smithdb-migration.md)。
