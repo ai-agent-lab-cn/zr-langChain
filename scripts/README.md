@@ -13,6 +13,7 @@ zr-langChain/
 ├── scripts/
 │   ├── langsmith_reader.py
 │   ├── verify_chapter09_trace.py
+│   ├── verify_chapter10_trace.py
 │   ├── langsmith_report.py
 │   └── README.md
 └── tests/
@@ -136,3 +137,20 @@ uv run python scripts/verify_chapter09_trace.py \
 通用报告的七天窗口真实读取成功，但返回 REVIEW：根扫描达到100条上限，5个LLM缺少reasoning计量。
 不能将 REVIEW 写为完整 PASS；需要完整根扫描时调整窗口或上限，不能将缺失 reasoning 当成已核实0。
 详细记录见 [迁移验收](../reports/langsmith-smithdb-migration.md)。
+
+## 6. 第十章 A—D 精确 Trace 验收
+
+`verify_chapter10_trace.py` 接收第 10 章 CLI 保存的完整 A—D 在线证据，要求四组均为 PASS 且 `trace_requested=true`。它使用 `client.runs.retrieve()` 按精确模型 ID 读取，再复用现有只读适配层读取完整调用树；不受 `runs.query()` 默认时间窗口限制。
+
+```bash
+uv run python scripts/verify_chapter10_trace.py \
+  .runs/chapter10/deepseek-traced-20261024-first.json \
+  .runs/chapter10/langsmith-audit-repeat.json
+uv run python -m unittest discover -s tests -p 'test_chapter10_trace.py' -v
+```
+
+默认使用 `.env` 中的 LangSmith 项目，可用 `--project` 覆盖；`--max-spans` 默认 250，表示每条完整 Trace 的本地分析上限。输入证据不存在、输出已存在或上限非法时，在读取凭据前拒绝执行。
+
+验收范围包括 A 的历史裁剪和线程隔离、B 的摘要更正、C 的真实偏好工具读取、D 的专家后代调用和输入隔离；模型消息与根输出均检查工具配对。Token 按唯一叶子 LLM 汇总，并与本地提供商返回值按场景对账，拒绝重复或嵌套 LLM 导致的重复计量。
+
+工具不创建聊天模型、不重跑实验、不修改原始证据或共享适配层的默认选取字段；只把本次精确查询的模型输入留在内存检查，导出脱敏调用结构和计量。失败只输出固定检查代码或异常类型，输出不会覆盖旧报告。
