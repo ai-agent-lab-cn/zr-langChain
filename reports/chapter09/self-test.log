@@ -1,0 +1,2 @@
+{"case": "supervisor", "run_id": "local-run-018", "offline": true, "steps": ["supervisor", "account_agent", "supervisor"], "active_agent": "supervisor", "protocol": "PASS"}
+{"case": "handoff", "run_id": "local-run-019", "offline": true, "steps": ["triage", "logistics_agent"], "active_agent": "logistics_agent", "protocol": "PASS", "checkpoint": "PASS"}

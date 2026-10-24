@@ -1,0 +1,67 @@
+test_free_tier_metric_is_not_sufficient_for_daily_quota (test_experiment_reliability.AdditionalQuotaSafetyTest.test_free_tier_metric_is_not_sufficient_for_daily_quota) ... ok
+test_atomic_file_is_valid_json (test_experiment_reliability.ExperimentBatchTests.test_atomic_file_is_valid_json) ... ok
+test_different_model_or_source_is_rejected (test_experiment_reliability.ExperimentBatchTests.test_different_model_or_source_is_rejected) ... ok
+test_resume_skips_pass_and_retries_pending_or_blocked (test_experiment_reliability.ExperimentBatchTests.test_resume_skips_pass_and_retries_pending_or_blocked) ... ok
+test_running_after_process_failure_becomes_pending (test_experiment_reliability.ExperimentBatchTests.test_running_after_process_failure_becomes_pending) ... ok
+test_daily_quota_requires_immediate_stop (test_experiment_reliability.ExperimentErrorsTests.test_daily_quota_requires_immediate_stop) ... ok
+test_deepseek_insufficient_balance_stops_batch (test_experiment_reliability.ExperimentErrorsTests.test_deepseek_insufficient_balance_stops_batch) ... ok
+test_deepseek_other_error_is_model_failure (test_experiment_reliability.ExperimentErrorsTests.test_deepseek_other_error_is_model_failure) ... ok
+test_deepseek_rate_limit_is_transient (test_experiment_reliability.ExperimentErrorsTests.test_deepseek_rate_limit_is_transient) ... ok
+test_never_copy_error_body_into_report (test_experiment_reliability.ExperimentErrorsTests.test_never_copy_error_body_into_report) ... ok
+test_parser_and_assertion_are_distinct (test_experiment_reliability.ExperimentErrorsTests.test_parser_and_assertion_are_distinct) ... ok
+test_plain_429_is_not_assumed_daily (test_experiment_reliability.ExperimentErrorsTests.test_plain_429_is_not_assumed_daily) ... ok
+test_main_stops_on_quota_then_resumes_without_repeating_pass (test_experiment_reliability.MainOrchestrationTests.test_main_stops_on_quota_then_resumes_without_repeating_pass) ... ok
+test_all_interrupt_paths_reject_wrong_batch_or_time (test_langsmith_report.TestAcceptanceBoundaries.test_all_interrupt_paths_reject_wrong_batch_or_time) ... ok
+test_interrupt_error_without_batch_is_not_exempt (test_langsmith_report.TestAcceptanceBoundaries.test_interrupt_error_without_batch_is_not_exempt) ... ok
+test_isolation_cases_must_use_different_threads (test_langsmith_report.TestAcceptanceBoundaries.test_isolation_cases_must_use_different_threads) ... ok
+test_isolation_thread_cannot_be_missing (test_langsmith_report.TestAcceptanceBoundaries.test_isolation_thread_cannot_be_missing) ... ok
+test_missing_batch_or_time_is_not_verified (test_langsmith_report.TestAcceptanceBoundaries.test_missing_batch_or_time_is_not_verified) ... ok
+test_resume_cannot_start_before_pause_finishes (test_langsmith_report.TestAcceptanceBoundaries.test_resume_cannot_start_before_pause_finishes) ... ok
+test_unfinished_child_blocks_interrupt_exemption (test_langsmith_report.TestAcceptanceBoundaries.test_unfinished_child_blocks_interrupt_exemption) ... ok
+test_unfinished_child_is_recorded_and_blocks_pass (test_langsmith_report.TestAcceptanceBoundaries.test_unfinished_child_is_recorded_and_blocks_pass) ... ok
+test_unfinished_non_hitl_trace_is_review (test_langsmith_report.TestAcceptanceBoundaries.test_unfinished_non_hitl_trace_is_review) ... ok
+test_batch_id_and_thread_fingerprint_are_extracted (test_langsmith_report.TestBatchFiltering.test_batch_id_and_thread_fingerprint_are_extracted) ... ok
+test_remote_batch_filter_ignores_other_batches (test_langsmith_report.TestBatchFiltering.test_remote_batch_filter_ignores_other_batches) ... [1/1] 查询 chapter08-approve-pause
+ok
+test_confirmed_interrupt_is_exempt_in_trace_and_pair (test_langsmith_report.TestInterruptEvidence.test_confirmed_interrupt_is_exempt_in_trace_and_pair) ... ok
+test_missing_or_invalid_resume_never_exempts (test_langsmith_report.TestInterruptEvidence.test_missing_or_invalid_resume_never_exempts) ... ok
+test_missing_reasoning_remains_review_after_interrupt_fix (test_langsmith_report.TestInterruptEvidence.test_missing_reasoning_remains_review_after_interrupt_fix) ... ok
+test_other_pause_error_and_bad_state_are_not_hidden (test_langsmith_report.TestInterruptEvidence.test_other_pause_error_and_bad_state_are_not_hidden) ... ok
+test_reanalysis_cannot_reuse_previous_exemption (test_langsmith_report.TestInterruptEvidence.test_reanalysis_cannot_reuse_previous_exemption) ... ok
+test_wrong_exception_or_node_never_exempted (test_langsmith_report.TestInterruptEvidence.test_wrong_exception_or_node_never_exempted) ... ok
+test_exact_cap_is_complete_over_cap_is_limited (test_langsmith_report.TestReadBounds.test_exact_cap_is_complete_over_cap_is_limited) ... ok
+test_span_overflow_refuses_partial_report (test_langsmith_report.TestReadBounds.test_span_overflow_refuses_partial_report) ... [1/1] 查询 chapter08-approve-pause
+ok
+test_cannot_verify_thread_id (test_langsmith_report.TestTraceAnalyzer.test_cannot_verify_thread_id) ... ok
+test_empty_result_is_fail (test_langsmith_report.TestTraceAnalyzer.test_empty_result_is_fail) ... ok
+test_missing_case_detected (test_langsmith_report.TestTraceAnalyzer.test_missing_case_detected) ... ok
+test_no_private_text_in_report (test_langsmith_report.TestTraceAnalyzer.test_no_private_text_in_report) ... ok
+test_online_complete_chapter08 (test_langsmith_report.TestTraceAnalyzer.test_online_complete_chapter08) ... ok
+test_only_llm_is_counted (test_langsmith_report.TestTraceAnalyzer.test_only_llm_is_counted) ... ok
+test_partial_tokens_are_not_false_zeros (test_langsmith_report.TestTraceAnalyzer.test_partial_tokens_are_not_false_zeros) ... ok
+test_reject_duplicate_llm_on_resume (test_langsmith_report.TestTraceAnalyzer.test_reject_duplicate_llm_on_resume) ... ok
+test_empty_request_rejected (test_multi_agent.MultiAgentTests.test_empty_request_rejected) ... ok
+test_handoff_changes_owner_and_checkpoint (test_multi_agent.MultiAgentTests.test_handoff_changes_owner_and_checkpoint) ... ok
+test_supervisor_returns_after_subagent (test_multi_agent.MultiAgentTests.test_supervisor_returns_after_subagent) ... ok
+test_unknown_request_does_not_transfer (test_multi_agent.MultiAgentTests.test_unknown_request_does_not_transfer) ... ok
+test_unpaired_tool_call_rejected (test_multi_agent.MultiAgentTests.test_unpaired_tool_call_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 45 tests in 0.064s
+
+OK
+运行模式: 真实 LangGraph / DeepSeek 结构化草稿
+实验批次: chapter08-e602620b7b724fdf | 新建批次
+❌ reject 失败：QUOTA_EXHAUSTED（阶段：startup）；建议最早重试间隔约 4676s
+⛔ 检测到配额耗尽或账户余额不足：终止本批后续在线用例；保留剩余 PENDING
+批次状态: BLOCKED | /var/folders/gy/r7w7hl2j2tb6gr4gk93dr8hw0000gn/T/tmpn6ufk4nn/.runs/chapter08/latest.json
+
+========== 总体验收 ==========
+❌ 存在失败实验
+运行模式: 真实 LangGraph / DeepSeek 结构化草稿
+实验批次: chapter08-e602620b7b724fdf | 恢复未通过场景
+⏭ approve：已在本批次 PASS，跳过重复 API 调用
+批次状态: PASS | /var/folders/gy/r7w7hl2j2tb6gr4gk93dr8hw0000gn/T/tmpn6ufk4nn/.runs/chapter08/latest.json
+
+========== 总体验收 ==========
+✅ 所选实验全部通过

@@ -1,0 +1,26 @@
+[
+  {
+    "case": "supervisor",
+    "run_id": "local-run-001",
+    "offline": false,
+    "steps": [
+      "supervisor",
+      "account_agent",
+      "supervisor"
+    ],
+    "active_agent": "supervisor",
+    "protocol": "PASS"
+  },
+  {
+    "case": "handoff",
+    "run_id": "local-run-002",
+    "offline": false,
+    "steps": [
+      "triage",
+      "logistics_agent"
+    ],
+    "active_agent": "logistics_agent",
+    "protocol": "PASS",
+    "checkpoint": "PASS"
+  }
+]

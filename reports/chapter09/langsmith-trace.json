@@ -1,0 +1,159 @@
+[
+  {
+    "case": "supervisor",
+    "run_id": "local-run-001",
+    "trace_url": "LOCAL_TRACE_ONLY",
+    "status": "PASS",
+    "steps": [
+      "supervisor",
+      "account_agent",
+      "supervisor"
+    ],
+    "active_agent": "supervisor",
+    "tool_pairs": [
+      {
+        "tool": "account_agent",
+        "tool_call_id": "call_00_4Uu4kJSfaMnlEudsqevz4015",
+        "matched": true
+      }
+    ],
+    "run_count": 12,
+    "llm_calls": 3,
+    "tokens": {
+      "input": 1046,
+      "output": 427,
+      "total": 1473
+    },
+    "runs": [
+      {
+        "id": "local-run-003",
+        "parent_id": "local-run-004",
+        "name": "route",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-005",
+        "parent_id": "local-run-004",
+        "name": "ChatDeepSeek",
+        "type": "llm"
+      },
+      {
+        "id": "local-run-004",
+        "parent_id": "local-run-001",
+        "name": "supervisor",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-006",
+        "parent_id": "local-run-007",
+        "name": "ChatDeepSeek",
+        "type": "llm"
+      },
+      {
+        "id": "local-run-007",
+        "parent_id": "local-run-008",
+        "name": "account_agent",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-008",
+        "parent_id": "local-run-009",
+        "name": "account_agent",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-009",
+        "parent_id": "local-run-010",
+        "name": "account_agent",
+        "type": "tool"
+      },
+      {
+        "id": "local-run-010",
+        "parent_id": "local-run-001",
+        "name": "delegate",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-011",
+        "parent_id": "local-run-012",
+        "name": "route",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-013",
+        "parent_id": "local-run-012",
+        "name": "ChatDeepSeek",
+        "type": "llm"
+      },
+      {
+        "id": "local-run-012",
+        "parent_id": "local-run-001",
+        "name": "supervisor",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-001",
+        "parent_id": null,
+        "name": "chapter09-supervisor",
+        "type": "chain"
+      }
+    ]
+  },
+  {
+    "case": "handoff",
+    "run_id": "local-run-002",
+    "trace_url": "LOCAL_TRACE_ONLY",
+    "status": "PASS",
+    "steps": [
+      "triage",
+      "logistics_agent"
+    ],
+    "active_agent": "logistics_agent",
+    "tool_pairs": [
+      {
+        "tool": "transfer_to_logistics",
+        "tool_call_id": "call_00_pAxElSAFv2v9CAMu3vUZ1247",
+        "matched": true
+      }
+    ],
+    "run_count": 5,
+    "llm_calls": 2,
+    "tokens": {
+      "input": 427,
+      "output": 88,
+      "total": 515
+    },
+    "runs": [
+      {
+        "id": "local-run-014",
+        "parent_id": "local-run-015",
+        "name": "ChatDeepSeek",
+        "type": "llm"
+      },
+      {
+        "id": "local-run-015",
+        "parent_id": "local-run-002",
+        "name": "logistics_agent",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-016",
+        "parent_id": "local-run-017",
+        "name": "ChatDeepSeek",
+        "type": "llm"
+      },
+      {
+        "id": "local-run-017",
+        "parent_id": "local-run-002",
+        "name": "triage",
+        "type": "chain"
+      },
+      {
+        "id": "local-run-002",
+        "parent_id": null,
+        "name": "chapter09-handoff",
+        "type": "chain"
+      }
+    ]
+  }
+]

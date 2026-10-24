@@ -1,0 +1,12 @@
+flowchart TD
+    A[用户请求] --> B{协作模式}
+    B --> S[Supervisor LLM]
+    S -->|tool_calls| T[ToolNode: account_agent 工具]
+    T --> C[独立上下文的专员 StateGraph / LLM]
+    C -->|返回最终建议| T
+    T -->|ToolMessage + tool_call_id| S
+    S -->|汇总回复| E[END]
+    B --> H[triage LLM]
+    H -->|transfer tool call| K[Command: messages + active_agent + goto]
+    K --> L[logistics_agent 节点 / LLM]
+    L -->|直接回复用户| E
