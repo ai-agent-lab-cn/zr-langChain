@@ -31,28 +31,28 @@ PROMPTS = {
     "logistics_agent": "你是物流支持专员。简短建议核实运单和物流节点，不声称已联系快递或完成操作。",
 }
 
-
+# State TypedDict 允许可选字段，方便在 Graph 中增量更新。
 class State(TypedDict, total=False):
     # add_messages 按消息 ID 合并；ToolMessage.tool_call_id 对应 AI tool_calls 的 id。
     messages: Annotated[list[AnyMessage], add_messages]
     steps: Annotated[list[str], operator.add]
     active_agent: str
 
-
+# 提取用户输入的文本
 def request_text(state):
     text = next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), "")
     if not isinstance(text, str) or not text.strip():
         raise ValueError("请求不能为空")
     return text
 
-
+# 离线路由器：根据关键词确定领域，或返回 None 让用户澄清。
 def offline_route(text):
     """确定性测试替身；含多个领域或未知请求时请用户澄清。"""
     hits = [name for name, words in (("account_agent", ("账号", "登录")), ("logistics_agent", ("物流", "包裹")))
             if any(word in text for word in words)]
     return hits[0] if len(hits) == 1 else None
 
-
+# 构建子 Agent 的 StateGraph，独立消息上下文，在线由自己的 LLM 生成专业回复。
 def build_specialist(name, model=None):
     """子 Agent 有独立消息上下文；在线由自己的 LLM 生成专业回复。"""
     async def respond(state: State, config: RunnableConfig):
@@ -68,7 +68,7 @@ def build_specialist(name, model=None):
     graph.add_edge(name, END)
     return graph.compile(name=name)
 
-
+# 构建委派工具，Supervisor 调用子 Agent 的 StateGraph 处理任务。
 def specialist_tool(name, model=None):
     agent = build_specialist(name, model)
 
@@ -79,7 +79,7 @@ def specialist_tool(name, model=None):
         return result["messages"][-1].content
     return delegate
 
-
+# Supervisor 作为顶层 Agent，调用子 Agent 工具处理任务，整合回复。
 def build_supervisor(model=None):
     tools = [specialist_tool(name, model) for name in AGENTS]
     router = model.bind_tools(tools, parallel_tool_calls=False) if model is not None else None
@@ -97,7 +97,7 @@ def build_supervisor(model=None):
             answer = (AIMessage(content="", tool_calls=[{"name": name, "args": {"task": text}, "id": uuid4().hex}])
                       if name else AIMessage(content="请明确账号或物流领域。"))
         return {"messages": [answer], "steps": ["supervisor"], "active_agent": "supervisor"}
-
+    # 路由器：Supervisor 只允许单个子 Agent 工具调用，或直接结束。
     def route(state):
         calls = state["messages"][-1].tool_calls
         if len(calls) > 1 or any(c["name"] not in AGENTS for c in calls):
@@ -105,11 +105,11 @@ def build_supervisor(model=None):
         return "delegate" if calls else END
 
     tool_node = ToolNode(tools, handle_tool_errors=False)
-
+    # delegate 节点仅调用子 Agent 工具，返回结果给 Supervisor。
     async def delegate(state: State, config: RunnableConfig):
         result = await tool_node.ainvoke(state, config)
         return {"messages": result["messages"], "steps": [state["messages"][-1].tool_calls[0]["name"]]}
-
+    # Supervisor 节点和 delegate 节点共享同一 StateGraph，便于在同一上下文中整合消息。
     graph = StateGraph(State)
     graph.add_node("supervisor", supervisor)
     graph.add_node("delegate", delegate)
@@ -118,7 +118,7 @@ def build_supervisor(model=None):
     graph.add_edge("delegate", "supervisor")
     return graph.compile(name="chapter09-supervisor")
 
-
+# 构建移交工具，triage 节点调用 transfer 工具将控制权移交给子 Agent。
 def build_handoff(model=None):
     # transfer 工具声明提供给模型；控制权移交由 triage 节点返回的 Command 执行。
     @tool
@@ -133,7 +133,7 @@ def build_handoff(model=None):
 
     targets = {"transfer_to_account": "account_agent", "transfer_to_logistics": "logistics_agent"}
     router = model.bind_tools([transfer_to_account, transfer_to_logistics], parallel_tool_calls=False) if model is not None else None
-
+    # triage 节点根据用户请求调用 transfer 工具，返回 Command 改变下一节点。
     async def triage(state: State, config: RunnableConfig) -> Command[Literal["account_agent", "logistics_agent", "__end__"]]:
         text = request_text(state)
         if router is not None:
@@ -157,7 +157,7 @@ def build_handoff(model=None):
         return Command(goto=target, update={"messages": [answer, ToolMessage(
             content=f"控制权已移交 {target}", name=call["name"], tool_call_id=call["id"])],
             "active_agent": target, "steps": ["triage"]})
-
+    # triage 节点和子 Agent 节点共享同一 StateGraph，便于在同一上下文中整合消息。
     def node(name):
         async def respond(state: State, config: RunnableConfig):
             if state["active_agent"] != name:
@@ -178,7 +178,7 @@ def build_handoff(model=None):
         graph.add_edge(name, END)
     return graph.compile(checkpointer=InMemorySaver(), name="chapter09-handoff")
 
-
+# 验证实际输出的消息协议与路径，而非只判断模型文字。
 def validate(state, case):
     """验证实际输出的消息协议与路径，而非只判断模型文字。"""
     pending = {}
@@ -201,7 +201,7 @@ def validate(state, case):
     assert state["active_agent"] == ("supervisor" if case == "supervisor" else "logistics_agent")
     assert isinstance(state["messages"][-1], AIMessage) and state["messages"][-1].content
 
-
+# 主函数：根据命令行参数选择测试用例，在线或离线运行 Graph，打印结果并保存验收摘要。
 async def run(args):
     load_dotenv(ROOT / ".env")
     offline = args.offline or args.self_test
