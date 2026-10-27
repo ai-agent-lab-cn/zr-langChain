@@ -19,10 +19,10 @@ from langchain.mcp import MCPAdapter
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langsmith import tracing_context
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SERVER_SCRIPT = Path(__file__).resolve().with_name("server.py")
-load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 CASES = {
     "weather": (
@@ -72,6 +72,12 @@ def find_tool(tools: list, suffix: str):
 
 async def self_test(tools: list) -> bool:
     """测试真实 stdio MCP 握手/发现/调用；不使用模型、无需 API Key。"""
+    with tracing_context(enabled=False):
+        return await offline_checks(tools)
+
+
+async def offline_checks(tools: list) -> bool:
+    """在关闭追踪的上下文中调用本地 MCP 工具。"""
     names = tool_names(tools)
     print("发现 MCP Tools:", ", ".join(sorted(names)))
     try:
@@ -110,9 +116,12 @@ def check_online(case: str, messages: list) -> list[str]:
         for call in message.tool_calls
     ]
     tool_responses = [m for m in messages if isinstance(m, ToolMessage)]
+    # 错误正文可能重复请求中的数字，不能作为成功工具结果参与内容验收。
+    if any(m.status != "success" for m in tool_responses):
+        issues.append("MCP 工具执行失败，不能以错误正文作为成功结果")
     called = [call.get("name", "") for call in calls]
     output = content_text(messages[-1]) if messages else ""
-    tool_text = "\n".join(content_text(m) for m in tool_responses)
+    tool_text = "\n".join(content_text(m) for m in tool_responses if m.status == "success")
 
     required = {
         "weather": ("get_mock_weather",),
@@ -174,6 +183,8 @@ async def run_case(agent, name: str) -> bool:
 
 
 async def main_async(args: argparse.Namespace) -> int:
+    if not args.self_test:
+        load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
     if not SERVER_SCRIPT.is_file():
         raise FileNotFoundError(f"找不到 MCP Server：{SERVER_SCRIPT}")
     # FastMCP 将 Path 目标作为本地 Python 脚本，以 stdio 子进程方式启动。
@@ -218,7 +229,8 @@ def main() -> int:
         print(f"❌ 运行失败：{type(exc).__name__}: {exc}")
         return 1
     finally:
-        wait_for_all_tracers()
+        if not args.self_test:
+            wait_for_all_tracers()
 
 
 if __name__ == "__main__":

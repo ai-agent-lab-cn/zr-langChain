@@ -30,11 +30,11 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 from pydantic import BaseModel, Field
+from langsmith import tracing_context
 
 # 【环境配置】所有章节复用仓库根目录 .env，不在每个章节复制密钥。
 # 本文件在 08-langgraph-hitl/，其上两级目录就是仓库根目录。
 ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT / ".env")
 
 # 【实验可靠性】通用工具放在根目录 scripts/，HITL 图本身不依赖 Runner 的实现。
 # 直接执行 `python 08-langgraph-hitl/main.py` 时，把兄弟目录 scripts/ 加入模块搜索路径。
@@ -407,6 +407,16 @@ async def run_isolation(graph, *, batch_id: str | None = None, on_phase=None) ->
 # 【命令行调度】--self-test 和 --offline 都不创建 DeepSeek 模型，但真正执行 LangGraph。
 # 在线模式才加载根目录的 DEEPSEEK_API_KEY。
 async def main_async(args) -> int:
+    """离线执行不读取密钥，并禁止继承外层 LangSmith 追踪。"""
+    offline = args.self_test or args.offline
+    if not offline:
+        load_dotenv(ROOT / ".env")
+    with tracing_context(enabled=False if offline else None):
+        return await run_experiments(args)
+
+
+async def run_experiments(args) -> int:
+    """在选定追踪上下文中调度原有 HITL 场景。"""
     if args.resume_batch and (args.self_test or args.offline or args.interactive):
         raise ValueError("--resume-batch 只支持非交互的在线实验；离线自检不使用批次状态")
     if args.interactive and (args.case in ("all", "isolation") or args.self_test):
@@ -497,7 +507,8 @@ def main() -> int:
         return 1
     finally:
         # 退出前等待 LangSmith 异步 Trace 尽量写完，减少因进程退出而丢记录。
-        wait_for_all_tracers()
+        if not (args.self_test or args.offline):
+            wait_for_all_tracers()
 
 
 if __name__ == "__main__":

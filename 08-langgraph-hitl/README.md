@@ -10,7 +10,7 @@ tags: [LangChain, LangGraph, Human-in-the-loop, Interrupt, Checkpoint, Command, 
 > **本章定位：** 延续 [第七章 LangGraph Workflow](../07-langgraph-workflow/)，把 `needs_human` 这种**已执行结束的状态标记**，升级为真正的 **`interrupt()` 暂停 → 人工决策 → `Command(resume=...)` 恢复**。  
 > **技术栈：** Python 3.11 · uv · LangGraph 1.x · DeepSeek（`langchain-deepseek`）· Pydantic · LangSmith  
 > **源码：** [`main.py`](./main.py) · **仓库：** [zrLangChain](https://github.com/ai-agent-lab-cn/zr-langChain)  
-> **验收状态：** ✅ 2026-10-23 已提交旧版 LangGraph 离线 `--self-test` 通过日志；⏳ DeepSeek 接入后的本地离线回归、在线实验与 LangSmith Trace 尚待验证。
+> **验收状态：** ✅ 2026-10-27 当前实现离线 `--self-test` 直接复验通过；历史 DeepSeek 批次已观测到 5 次 LLM 调用，LangSmith 计量核对仍为 **REVIEW**（5 项 reasoning Token 字段缺失）。本次未重跑在线实验；历史结果见第 4 节。
 
 ## 1. 实践目标与基础知识
 

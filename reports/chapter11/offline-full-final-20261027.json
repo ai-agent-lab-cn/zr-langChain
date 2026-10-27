@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "batch_id": "56463f65-06f1-4b38-8088-939f0315c66b",
+  "mode": "offline",
+  "status": "PASS",
+  "records": [
+    {
+      "case": "A",
+      "case_id": "ch11-A",
+      "fixture_version": "ch11-offline-v1",
+      "mode": "offline",
+      "status": "PASS",
+      "provider_calls": 0,
+      "trace_requested": false,
+      "usage_metadata": null,
+      "checks": {
+        "transient_recovered": true,
+        "deadline_enforced": true,
+        "non_retryable_stopped": true,
+        "429_not_automatically_quota": true,
+        "breaker_short_circuit": true,
+        "fallback_respects_classification": true,
+        "graph_retried_three_times": true,
+        "async_timeout_detected": true
+      },
+      "observed": {
+        "retry": {
+          "status": "SUCCESS",
+          "reason": "SUCCESS",
+          "requests": 3,
+          "waits": [
+            1,
+            2
+          ],
+          "elapsed": 3.0,
+          "result": "ok"
+        },
+        "deadline": {
+          "status": "FAILED",
+          "reason": "DEADLINE_EXCEEDED",
+          "requests": 2,
+          "waits": [
+            1
+          ],
+          "elapsed": 1.0
+        },
+        "stopped": {
+          "balance": {
+            "status": "FAILED",
+            "reason": "BALANCE",
+            "requests": 1,
+            "waits": [],
+            "elapsed": 0.0
+          },
+          "auth": {
+            "status": "FAILED",
+            "reason": "AUTH",
+            "requests": 1,
+            "waits": [],
+            "elapsed": 0.0
+          },
+          "invalid": {
+            "status": "FAILED",
+            "reason": "INVALID",
+            "requests": 1,
+            "waits": [],
+            "elapsed": 0.0
+          },
+          "quota": {
+            "status": "FAILED",
+            "reason": "QUOTA",
+            "requests": 1,
+            "waits": [],
+            "elapsed": 0.0
+          }
+        },
+        "graph_attempts": [
+          1,
+          2,
+          3
+        ],
+        "timeout_attempts": 1
+      }
+    },
+    {
+      "case": "B",
+      "case_id": "ch11-B",
+      "fixture_version": "ch11-offline-v1",
+      "mode": "offline",
+      "status": "PASS",
+      "provider_calls": 0,
+      "trace_requested": false,
+      "usage_metadata": null,
+      "checks": {
+        "successful_sibling_not_repeated": true,
+        "single_external_effect": true,
+        "unknown_requires_reconcile": true
+      },
+      "observed": {
+        "parallel_calls": {
+          "good": 1,
+          "flaky": 2
+        },
+        "effects": 1,
+        "write_attempts": 2,
+        "status": "SUCCESS",
+        "unknown_replay_blocked": true
+      }
+    },
+    {
+      "case": "C",
+      "case_id": "ch11-C",
+      "fixture_version": "ch11-offline-v1",
+      "mode": "offline",
+      "status": "PASS",
+      "provider_calls": 0,
+      "trace_requested": false,
+      "usage_metadata": null,
+      "checks": {
+        "untrusted_fields_removed": true,
+        "cross_scope_denied": true,
+        "real_pause_and_reentry": true,
+        "approved_edit_validated": true,
+        "replay_blocked": true,
+        "rejected_and_expired_no_effect": true,
+        "checkpoint_has_no_secret": true
+      },
+      "observed": {
+        "approved_effects": 1,
+        "denied_effects": 0
+      }
+    },
+    {
+      "case": "D",
+      "case_id": "ch11-D",
+      "fixture_version": "ch11-offline-v1",
+      "mode": "offline",
+      "status": "PASS",
+      "provider_calls": 0,
+      "trace_requested": false,
+      "usage_metadata": null,
+      "checks": {
+        "required_failure_propagated": true,
+        "optional_failure_degraded": true,
+        "handoff_budget_enforced": true,
+        "tool_protocol_complete": true,
+        "fixture_evidence_checked": true
+      },
+      "observed": {
+        "required_status": "FAILED",
+        "optional_status": "DEGRADED",
+        "handoffs": 3,
+        "model_calls": 4,
+        "fixture_tokens": 12,
+        "incomplete_fixture": "REVIEW"
+      }
+    }
+  ],
+  "trace_source": "local_fixture_only",
+  "fixture_version": "ch11-offline-v1",
+  "source_sha256": "f0b3dca14117d7413cc9167516594818dd9c4e23bcb17fe80d13234592fb38a6",
+  "versions": {
+    "langchain": "1.4.6",
+    "langgraph": "1.2.16",
+    "langsmith": "0.14.11"
+  }
+}

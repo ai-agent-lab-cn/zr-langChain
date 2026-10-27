@@ -327,7 +327,7 @@ store.delete(namespace, "reply-style")
 missing = store.get(namespace, "reply-style")  # 删除后应不存在
 ```
 
-`search` 的第一个参数是 **namespace prefix**，不是权限过滤器；只传租户前缀可能搜索到旗下多个用户的条目。示例显式给出用户与用途，但该前缀仍可能匹配其子 namespace。若应用只允许当前精确空间，应额外比较返回条目的 namespace；本章 `MemoryRepository.search()` 已实施这一检查。未配置索引 / Embedding 的 `InMemoryStore()` 用于键值与过滤查询，不能据此宣称已经具备语义相似检索。需要语义查询时，再评估 `index`、向量维度、Embedding 模型与 `query`；这些属于进阶 / 扩展，本章未实施。
+`search` 的第一个参数是 **namespace prefix**，不是权限过滤器；只传租户前缀可能搜索到旗下多个用户的条目。示例显式给出用户与用途，但该前缀仍可能匹配其子 namespace。若应用只允许当前精确空间，需要确保精确匹配，不能先用小分页截断再过滤。本章只有固定 `reply-style`，`MemoryRepository.search()` 直接按完整 namespace/key 读取，并沿用有效期与枚举检查；不会被大量子空间条目挤出搜索结果。未配置索引 / Embedding 的 `InMemoryStore()` 用于键值与过滤查询，不能据此宣称已经具备语义相似检索。需要语义查询时，再评估 `index`、向量维度、Embedding 模型与 `query`；这些属于进阶 / 扩展，本章未实施。
 
 ### 5.2 跨 thread 共享与隔离
 

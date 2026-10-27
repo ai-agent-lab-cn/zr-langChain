@@ -1,10 +1,10 @@
 [project]
 name = "zr-langChain"
 version = "0.1.0"
-description = "Add your description here"
+description = "12 章 LangChain / LangGraph AI Agent 教学实验与验收示例"
 readme = "README.md"
 authors = [
-    { name = "zrr", email = "you@example.com" }
+    { name = "zrr" }
 ]
 requires-python = ">=3.11"
 dependencies = [

@@ -26,11 +26,11 @@ from langchain_core.tracers.langchain import wait_for_all_tracers
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langsmith import tracing_context
 
 CHAPTER_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CHAPTER_DIR.parent
 KNOWLEDGE_DIR = CHAPTER_DIR / "knowledge"
-load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 CHUNK_SIZE = 220
 CHUNK_OVERLAP = 35
@@ -187,6 +187,12 @@ def content_text(content: object) -> str:
 
 def self_test() -> bool:
     """离线验证文档读取、切片、向量索引、引用和 Tool；不调用 Gemini。"""
+    with tracing_context(enabled=False):
+        return offline_checks()
+
+
+def offline_checks() -> bool:
+    """在关闭追踪的上下文中执行本地检索与工具断言。"""
     original = load_knowledge()
     store, chunks = build_index(get_embeddings(offline=True))
     print(f"文档: {len(original)}；Chunks: {len(chunks)}（每个 Chunk 均有 source + chunk_id）")
@@ -305,6 +311,7 @@ def main() -> int:
     try:
         if args.self_test:
             return 0 if self_test() else 1
+        load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY 未配置；请检查仓库根目录 .env。")
@@ -318,7 +325,8 @@ def main() -> int:
         print(f"❌ 运行失败：{type(exc).__name__}: {exc}")
         return 1
     finally:
-        wait_for_all_tracers()
+        if not args.self_test:
+            wait_for_all_tracers()
 
 
 if __name__ == "__main__":

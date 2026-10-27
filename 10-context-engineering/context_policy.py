@@ -135,15 +135,14 @@ class MemoryRepository:
         # 返回浅拷贝，避免调用方改动顶层字段时直接修改本次取到的映射。
         return dict(value)
 
-    # Store.search 支持 namespace 前缀；这里传完整用户空间以避免范围过宽。
-    # 搜索结果还要经过 get 的有效期与枚举检查，不能绕过读取策略。
+    # 本章只有固定 reply-style；按完整 namespace/key 读取，避免前缀分页遗漏。
+    # 仍经过 get 的有效期与枚举检查，不能绕过读取策略。
     def search(self, ctx):
-        # 使用完整用户 namespace，而不是宽泛租户前缀。
-        items = self.store.search(self.namespace(ctx), limit=10)
-        current = self.get(ctx)
-        # namespace 参数是前缀，不是精确相等条件；必须排除子空间中的同名条目。
-        return [item for item in items if item.namespace == self.namespace(ctx)
-                and item.key == "reply-style" and current is not None]
+        with self._lock:
+            if self.get(ctx) is None:
+                return []
+            item = self.store.get(self.namespace(ctx), "reply-style")
+            return [item] if item is not None else []
 
     # expected_version 表示调用方认为的旧版本；只有与当前版本一致才允许写入。
     # ttl 的单位为秒；本例保存 expires_at 并在读取时检查，没有启动自动清理任务。

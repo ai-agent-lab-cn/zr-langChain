@@ -163,6 +163,9 @@ def validate_result(case_name: str, value: object) -> list[str]:
         actual = {(item.owner, item.priority, item.due_date) for item in value.tasks}
         if actual != expected:
             issues.append("责任人、优先级或截止日期与原文不一致")
+        expected_tasks = {"张三": "需求清单", "李四": "演示文稿"}
+        if any(expected_tasks.get(item.owner, "") not in item.task for item in value.tasks):
+            issues.append("任务内容与原文中的责任人分工不一致")
         if any(not re.fullmatch(r"\d{4}-\d{2}-\d{2}", item.due_date) for item in value.tasks):
             issues.append("日期不是 YYYY-MM-DD 格式")
 

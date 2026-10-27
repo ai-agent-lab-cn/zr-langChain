@@ -1,0 +1,102 @@
+{
+  "review_date": "2026-10-27",
+  "scope": "12-chapter-teaching-project",
+  "test_result": {
+    "tests": 172,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "offline_entrypoints": [
+    {
+      "chapter": "chapter-03",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-04",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-05",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-06",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-07",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-08",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-09",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-10",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-11",
+      "exit_code": 0
+    },
+    {
+      "chapter": "chapter-12",
+      "exit_code": 0
+    }
+  ],
+  "source_files_reviewed": [
+    "01-basic-agent/main.py",
+    "02-multi-tool-agent/main.py",
+    "03-structured-output/main.py",
+    "04-agent-memory/main.py",
+    "05-mcp-agent/main.py",
+    "05-mcp-agent/server.py",
+    "06-rag-agent/main.py",
+    "07-langgraph-workflow/main.py",
+    "08-langgraph-hitl/main.py",
+    "09-langgraph-multi-agent/main.py",
+    "10-context-engineering/context_policy.py",
+    "10-context-engineering/main.py",
+    "10-context-engineering/offline_model.py",
+    "11-agent-reliability/main.py",
+    "11-agent-reliability/retry_policy.py",
+    "11-agent-reliability/safety.py",
+    "11-agent-reliability/scenarios.py",
+    "11-agent-reliability/trace_audit.py",
+    "12-agent-evaluation/evaluation_core.py",
+    "12-agent-evaluation/graph_cases.py",
+    "12-agent-evaluation/hitl_case.py",
+    "12-agent-evaluation/main.py",
+    "scripts/experiment_errors.py",
+    "scripts/experiment_runner.py",
+    "scripts/langsmith_reader.py",
+    "scripts/langsmith_report.py",
+    "scripts/verify_chapter09_trace.py",
+    "scripts/verify_chapter10_trace.py"
+  ],
+  "test_files": [
+    "tests/test_agent_reliability.py",
+    "tests/test_agent_reliability_policy.py",
+    "tests/test_agent_reliability_safety.py",
+    "tests/test_agent_reliability_trace.py",
+    "tests/test_chapter10_trace.py",
+    "tests/test_chapter12.py",
+    "tests/test_closeout.py",
+    "tests/test_context_engineering.py",
+    "tests/test_experiment_reliability.py",
+    "tests/test_langsmith_reader.py",
+    "tests/test_langsmith_report.py",
+    "tests/test_multi_agent.py"
+  ],
+  "chapter12_source_sha256": "11c54521464d94c5125add5010f9d7658259181f10a09158a51396d3b09a80cd",
+  "online_model_calls": "NOT_RUN",
+  "langsmith_server_acceptance": "NOT_RUN",
+  "chapter08_historical_trace_status": "REVIEW",
+  "dependencies_upgraded": false,
+  "git_commit_push": "NOT_RUN"
+}

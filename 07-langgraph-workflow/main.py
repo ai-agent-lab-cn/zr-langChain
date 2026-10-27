@@ -24,11 +24,11 @@ from langchain_core.tracers.langchain import wait_for_all_tracers
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, Field
+from langsmith import tracing_context
 
 # 【运行环境】所有章节共用仓库根目录的 .env，避免每章复制密钥文件。
 # __file__ 位于 07-langgraph-workflow/，其 parent.parent 才是 zr-langChain/。
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(PROJECT_ROOT / ".env")
 
 # 【业务类型】Literal 限制 Python 类型检查阶段的可选值；运行时的模型输出约束由 Pydantic 负责。
 # manual 代表无法明确归类，需要进入模拟人工复核分支。
@@ -295,6 +295,16 @@ async def self_test() -> bool:
 
 # 【运行模式选择】self-test/offline 完全不初始化模型；在线模式才从根 .env 读取密钥。
 async def main_async(args: argparse.Namespace) -> int:
+    """离线执行不读取 .env，且覆盖调用方继承的自动追踪开关。"""
+    offline = args.self_test or args.offline
+    if not offline:
+        load_dotenv(PROJECT_ROOT / ".env")
+    with tracing_context(enabled=False if offline else None):
+        return await run_experiments(args)
+
+
+async def run_experiments(args: argparse.Namespace) -> int:
+    """在选定追踪上下文中运行原有工作流与教学断言。"""
     if args.self_test:
         return 0 if await self_test() else 1
 
@@ -338,7 +348,8 @@ def main() -> int:
         return 1
     finally:
         # 在进程退出前刷新 LangSmith 异步追踪，减少 Trace 因提前退出而丢失。
-        wait_for_all_tracers()
+        if not (args.self_test or args.offline):
+            wait_for_all_tracers()
 
 
 if __name__ == "__main__":

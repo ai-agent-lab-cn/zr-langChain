@@ -57,7 +57,6 @@ zr-langChain/
     ├── main.py                   # LangChain MCPAdapter / Agent / 验收
     ├── server.py                 # FastMCP Server（模拟天气、计算）
     ├── mcp-agent-flow.svg        # 架构图（README 缩略图 + 预览）
-    ├── mcp-agent-flow.mmd        # 可编辑 Mermaid 源码
     └── README.md
 ```
 
@@ -165,7 +164,9 @@ uv run python 05-mcp-agent/main.py --case combined
        width="450">
 </a>
 
-[🔍 点击预览完整流程图](./mcp-agent-flow.svg) · [✏️ 查看可编辑 Mermaid 源码](./mcp-agent-flow.mmd)
+[🔍 点击预览完整流程图](./mcp-agent-flow.svg)
+
+当前仓库保留 SVG 图稿，未提供对应的 Mermaid 源文件。
 
 从调用路径看，有六个关键环节：
 
@@ -298,7 +299,7 @@ ToolMessage（success）
 | `chapter05-math` | `01a15db5-1b15-7973-be72-9a0a34dd4ee2` |
 | `chapter05-combined` | `01a15db5-4c0e-7872-94b5-d85850d9089a` |
 
-**离线自检状态：** 在线 Trace 已证明 MCP stdio Server、工具发现与调用的主链路可用；但尚未收到独立运行 `--self-test` 的日志，故**不将离线自检标记为通过**。离线脚本还会单独检查未知城市的处理。
+**离线自检状态：** 2026-10-27 整库收尾时直接执行了 `--self-test`，真实 MCP stdio 握手、工具发现、天气、两种计算与未知城市处理全部通过，退出码 0。该结果与下方历史在线 Trace 分开记录；新增工具错误负例确保 `status="error"` 的正文不能冒充成功结果。详见 [整库收尾记录](../reports/final-closeout-20261027.md)。
 
 ## 5. 排障经验与实践总结
 

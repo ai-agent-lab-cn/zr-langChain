@@ -13,6 +13,7 @@ from typing import Annotated, Literal, TypedDict
 from uuid import uuid4
 
 from dotenv import load_dotenv
+from langsmith import tracing_context
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
@@ -203,12 +204,17 @@ def validate(state, case):
 
 # 主函数：根据命令行参数选择测试用例，在线或离线运行 Graph，打印结果并保存验收摘要。
 async def run(args):
-    load_dotenv(ROOT / ".env")
+    """离线覆盖继承的追踪上下文；在线才加载配置，退出后恢复外层开关。"""
     offline = args.offline or args.self_test
-    if offline:
-        # 自检不上传 Trace，不把离线替身误标为在线 LLM。
-        os.environ["LANGSMITH_TRACING"] = "false"
-        os.environ["LANGCHAIN_TRACING_V2"] = "false"
+    if not offline:
+        load_dotenv(ROOT / ".env")
+    with tracing_context(enabled=False if offline else None):
+        return await run_experiments(args)
+
+
+async def run_experiments(args):
+    """在选定追踪上下文中执行 Supervisor / Handoff 场景。"""
+    offline = args.offline or args.self_test
     model = None
     if not offline:
         if not os.getenv("DEEPSEEK_API_KEY"):
@@ -253,7 +259,8 @@ def main():
         print(f"FAIL: {type(exc).__name__}；请核查配置、配额或协议，未自动重试。")
         return 1
     finally:
-        wait_for_all_tracers()
+        if not (args.self_test or args.offline):
+            wait_for_all_tracers()
 
 
 if __name__ == "__main__":

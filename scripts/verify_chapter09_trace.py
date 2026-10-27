@@ -15,11 +15,14 @@ def audit(root, runs, case):
     assert data['steps'] == expected
     assert data['active_agent'] == ("supervisor" if case == "supervisor" else "logistics_agent")
     pending = {}
+    seen = set()
     pairs = []
     for message in data['messages']:
         if message['type'] == 'ai':
             assert not pending, '模型收到未配对工具调用'
             for call in message.get('tool_calls', []):
+                assert call.get('id') and call['id'] not in seen, '工具调用 ID 为空或重复'
+                seen.add(call['id'])
                 pending[call['id']] = call['name']
         elif message['type'] == 'tool':
             call_id = message['tool_call_id']

@@ -16,9 +16,9 @@ from langchain_core.messages import HumanMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.memory import InMemorySaver
+from langsmith import tracing_context
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 SYSTEM_PROMPT = (
     "You are a concise assistant answering in Chinese. "
@@ -147,8 +147,12 @@ def run_update(agent) -> bool:
 
 def self_test() -> bool:
     """Offline Agent + checkpoint integration test, without Gemini or LangSmith calls."""
-    # Environment tracing can be on for live experiments; prevent uploads here.
-    os.environ["LANGSMITH_TRACING"] = "false"
+    with tracing_context(enabled=False):
+        return offline_checks()
+
+
+def offline_checks() -> bool:
+    """在关闭追踪的局部上下文中执行真实 Agent 和 Checkpoint 检查。"""
     from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
     saver = InMemorySaver()
@@ -180,6 +184,7 @@ def self_test() -> bool:
 
 
 def build_agent():
+    load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY 未配置；请检查项目根目录的 .env。")

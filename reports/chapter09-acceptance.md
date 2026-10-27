@@ -18,8 +18,8 @@
 
 初始测试证实 main.py 缺失。实现后发现动态加载测试模块未注册 sys.modules 导致 TypedDict 注解解析失败，以及带 checkpointer 的未知请求测试缺少 thread_id；均修正测试配置后完整通过。未以模拟结果替代在线调用。
 
-- supervisor：run_id `local-run-001`；LLM 3 次；tokens {'input': 1046, 'output': 427, 'total': 1473}；路径 `supervisor → account_agent → supervisor`；[LangSmith Trace](LOCAL_TRACE_ONLY)。
-- handoff：run_id `local-run-002`；LLM 2 次；tokens {'input': 427, 'output': 88, 'total': 515}；路径 `triage → logistics_agent`；[LangSmith Trace](LOCAL_TRACE_ONLY)。
+- supervisor：run_id `local-run-001`；LLM 3 次；tokens {'input': 1046, 'output': 427, 'total': 1473}；路径 `supervisor → account_agent → supervisor`；LangSmith Trace（私有链接已脱敏）。
+- handoff：run_id `local-run-002`；LLM 2 次；tokens {'input': 427, 'output': 88, 'total': 515}；路径 `triage → logistics_agent`；LangSmith Trace（私有链接已脱敏）。
 
 服务端检查：所有 runs 已结束且无 error；父 run 均在同一 Trace；Supervisor 工具的后代包含专员 LLM；root.outputs 的 ToolMessage/tool_call_id、步骤及 owner 匹配。Handoff 本地真实 checkpoint 无待执行节点且 active_agent=logistics_agent。只汇总 llm runs，合计1,988 tokens。
 

@@ -132,8 +132,9 @@ class MainOrchestrationTests(unittest.TestCase):
     def test_main_stops_on_quota_then_resumes_without_repeating_pass(self):
         source = (ROOT / "08-langgraph-hitl" / "main.py").read_text(encoding="utf-8")
         tree = ast.parse(source)
-        node = next(x for x in tree.body if isinstance(x, ast.AsyncFunctionDef) and x.name == "main_async")
-        mod = ast.Module(body=[node], type_ignores=[])
+        nodes = [x for x in tree.body if isinstance(x, ast.AsyncFunctionDef)
+                 and x.name in {"main_async", "run_experiments"}]
+        mod = ast.Module(body=nodes, type_ignores=[])
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             namespace = {
@@ -143,6 +144,8 @@ class MainOrchestrationTests(unittest.TestCase):
                 "classify_error": classify_error,
                 "ChatDeepSeek": lambda **kw: object(),
                 "build_graph": lambda model: object(),
+                "load_dotenv": lambda *args, **kwargs: None,
+                "tracing_context": lambda **kwargs: __import__("contextlib").nullcontext(),
             }
             exec(compile(mod, "main_async", "exec"), namespace)
             executed = []

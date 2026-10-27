@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.tracers.langchain import wait_for_all_tracers
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # 加载环境变量
 load_dotenv(dotenv_path=".env")
@@ -19,7 +20,10 @@ def get_weather(city: str) -> str:
 
 # 创建 Agent
 agent = create_agent(
-    model=f"google_genai:{os.getenv('GEMINI_MODEL', 'gemini-3.6-flash')}",
+    model=ChatGoogleGenerativeAI(
+        model=os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
+        api_key=os.environ["GEMINI_API_KEY"],
+    ),
     tools=[get_weather],
     system_prompt=(
         "You are a helpful AI assistant. "
