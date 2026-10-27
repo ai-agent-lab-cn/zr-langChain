@@ -1,0 +1,134 @@
+{
+  "batch_id": "ch12-offline-210119981dd8",
+  "created_at": "2026-10-27T03:15:52.709259+00:00",
+  "dataset_version": "ch12-golden-v1",
+  "evaluator_version": "ch12-code-evaluator-v1",
+  "source_sha256": "ce4f0b711c24a10192fc865ab79572def5f3a6584d0be15502b197fd515de68f",
+  "mode": "local-real-langgraph-with-fake-tools",
+  "provider_calls": 0,
+  "langsmith_traces_uploaded": 0,
+  "usage_metadata": null,
+  "status": "PASS",
+  "cases": {
+    "A": {
+      "status": "PASS",
+      "summary": {
+        "status": "PASS",
+        "planned": 4,
+        "executed": 4,
+        "counts": {
+          "PASS": 4,
+          "FAIL": 0,
+          "REVIEW": 0,
+          "NOT_RUN": 0
+        },
+        "dataset_version": "ch12-golden-v1",
+        "evaluator_version": "ch12-code-evaluator-v1",
+        "pass_rate_over_planned": 1.0,
+        "scores": [
+          {
+            "case_id": "account",
+            "outcome": "PASS",
+            "checks": {
+              "status": true,
+              "tool_protocol": true,
+              "tool_trajectory": true,
+              "state_path": true,
+              "no_side_effect": true
+            },
+            "reasons": []
+          },
+          {
+            "case_id": "logistics",
+            "outcome": "PASS",
+            "checks": {
+              "status": true,
+              "tool_protocol": true,
+              "tool_trajectory": true,
+              "state_path": true,
+              "no_side_effect": true
+            },
+            "reasons": []
+          },
+          {
+            "case_id": "business",
+            "outcome": "PASS",
+            "checks": {
+              "status": true,
+              "tool_protocol": true,
+              "tool_trajectory": true,
+              "state_path": true,
+              "no_side_effect": true
+            },
+            "reasons": []
+          },
+          {
+            "case_id": "combined",
+            "outcome": "PASS",
+            "checks": {
+              "status": true,
+              "tool_protocol": true,
+              "tool_trajectory": true,
+              "state_path": true,
+              "no_side_effect": true
+            },
+            "reasons": []
+          }
+        ]
+      },
+      "graph_invokes": 4
+    },
+    "B": {
+      "status": "PASS",
+      "graph_invokes": 1,
+      "actual_tool_calls": 2,
+      "actual_tool_results": 2,
+      "actual_steps": [
+        "route",
+        "supervisor:lookup_account",
+        "tool_result",
+        "supervisor:lookup_business",
+        "tool_result",
+        "finalize"
+      ],
+      "good": "PASS",
+      "orphan_id_injection": "FAIL",
+      "missing_trajectory_injection": "REVIEW"
+    },
+    "C": {
+      "status": "PASS",
+      "graph_invokes": 6,
+      "interrupts": 3,
+      "resumes": 3,
+      "fake_unique_effects": 1,
+      "fake_idempotency_replay_allowed": false,
+      "decision_status": {
+        "reject": "rejected",
+        "unauthorized": "rejected",
+        "approve": "approved"
+      },
+      "resume_steps": [
+        "prepare",
+        "review",
+        "write"
+      ]
+    },
+    "D": {
+      "status": "PASS",
+      "comparison": {
+        "aligned_cases": 4,
+        "baseline_pass": 3,
+        "candidate_pass": 4,
+        "improvements": [
+          "combined"
+        ],
+        "regressions": [],
+        "status": "PASS"
+      },
+      "graph_invokes": 8,
+      "usage_metadata": null,
+      "provider_calls": 0,
+      "langsmith_traces_uploaded": 0
+    }
+  }
+}
