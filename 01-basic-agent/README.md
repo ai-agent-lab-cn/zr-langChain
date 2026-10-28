@@ -9,7 +9,7 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Tool-Calling]
 
 > **本章定位：** 一个可运行、可验证、可追踪的 LangChain 基础 Agent。  
 > **技术栈：** Python 3.11 · uv · LangChain · Google Gemini 3.6 Flash · LangSmith  
-> **实战项目：** `LChain-Demo`
+> **实战项目：** `zr-langChain`
 > **实践结论：** 已成功完成 Gemini 模型调用、`get_weather` 工具调用、Agent Loop，以及 LangSmith Trace 展示。
 
 ## 1. 目标与技术选型
@@ -79,10 +79,10 @@ flowchart TD
 
 ### 项目目录
 
-本次项目目录为 `~/Desktop/LChain-Demo`。以下是本章建议保留的最小结构：
+以下是本章建议保留的最小结构：
 
 ```text
-LChain-Demo/
+zr-langChain/
 ├── .env                 # 本地密钥与配置；禁止提交
 ├── .gitignore           # 忽略密钥、虚拟环境等
 ├── .python-version      # Python 版本（如项目使用）
@@ -96,7 +96,6 @@ LChain-Demo/
 ### 环境与依赖
 
 ```bash
-cd ~/Desktop/LChain-Demo
 
 # 仅在全新项目、尚无 pyproject.toml 时执行
 uv init --python 3.11
@@ -119,7 +118,7 @@ GEMINI_API_KEY=replace_with_your_own_gemini_key
 # LangSmith
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=replace_with_your_own_langsmith_key
-LANGSMITH_PROJECT=LChain-Demo
+LANGSMITH_PROJECT=zr-langChain
 ```
 
 **注意：** 上面是占位值；运行前请自行替换为有效密钥，绝不能把真实密钥发布到博客或提交到 Git。
@@ -390,10 +389,10 @@ Tool Calling 验证: 成功
 ```dotenv
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=replace_with_your_own_langsmith_key
-LANGSMITH_PROJECT=LChain-Demo
+LANGSMITH_PROJECT=zr-langChain
 ```
 
-在 [LangSmith 控制台](https://smith.langchain.com/) 的 `LChain-Demo` 项目中，**已实际看到 Trace 记录**，因此 Tracing 接入也已验证成功。
+在 [LangSmith 控制台](https://smith.langchain.com/) 的 `zr-langChain` 项目中，**已实际看到 Trace 记录**，因此 Tracing 接入也已验证成功。
 
 LangSmith 的典型观察视角包括：一次完整 Trace、其中的模型调用 Run、工具 Run、输入输出、耗时，以及提供商有返回时的 Token 用量。**本次已确认“存在 Trace”，没有额外记录具体 Token 数值、耗时或截图，因此不虚构这些数据。**
 
@@ -409,7 +408,7 @@ LangSmith 的典型观察视角包括：一次完整 Trace、其中的模型调�
 | Tool Calling | `AIMessage.tool_calls` 指向 `get_weather` | ✅ |
 | 工具真实执行 | 存在 `ToolMessage` 和工具返回值 | ✅ |
 | Agent Loop | 工具消息后再次出现模型回复 | ✅ |
-| LangSmith Tracing | 控制台可看到 `LChain-Demo` Trace | ✅ |
+| LangSmith Tracing | 控制台可看到 `zr-langChain` Trace | ✅ |
 | 真实天气查询 | 本章仅使用模拟函数 | 不在范围内 |
 
 ## 5. 排障经验与本章总结
@@ -465,7 +464,7 @@ load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 > **Gemini 负责决策，Python 工具负责执行，LangChain 负责协调，LangSmith 负责观测。**
 
-下一章将以现有 `LChain-Demo` 为基础，实践 **Multi-Tool Agent**：增加计算器、时间查询等工具，观察模型如何选择工具、传递参数，并在 LangSmith 中分析多工具调用路径。
+下一章将以现有 `zr-langChain` 为基础，实践 **Multi-Tool Agent**：增加计算器、时间查询等工具，观察模型如何选择工具、传递参数，并在 LangSmith 中分析多工具调用路径。
 
 ---
 
