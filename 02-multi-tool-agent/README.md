@@ -14,6 +14,11 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Multi-Tool, Tool-Call
 
 ## 1. 实践目标与技术选型
 
+> **本章阅读约定：** 继续沿用第 01 章的 `AIMessage → ToolMessage → AIMessage` 消息链，但将“工具真的运行了”升级为“工具请求、执行结果和业务预期是否全部匹配”。源码与实验入口均在 [`main.py`](./main.py)；本章没有单独的离线 `--self-test` CLI。
+
+**先修知识：** [第 01 章：Agent Loop 与消息协议](../01-basic-agent/README.md)。推荐阅读顺序：工具定义 → `SCENARIOS` → `build_agent()` → `verify_trace()` → Combined 时序图 → 真实历史 Trace。
+
+
 [第一章](../01-basic-agent/) 使用一个 `get_weather` 工具跑通了 `create_agent()` → Gemini → Python 工具 → `ToolMessage` → 最终回答。本章进一步向 Agent 注册天气、计算和时间三个工具，分别测试单工具选择与组合任务执行。
 
 本章要回答三个问题：**模型如何选择工具？一次模型响应能否请求多个工具？当下一步计算依赖上一步结果时，Agent 如何继续执行？**
@@ -194,6 +199,30 @@ uv run python 02-multi-tool-agent/main.py --case all
 
 ## 3. 核心机制与完整架构
 
+### 四个对象不能混为一谈
+
+| 对象 | 数据来自哪里 | 含义 | 常见误判 |
+| --- | --- | --- | --- |
+| `AIMessage.tool_calls` | 模型回复 | 请求调用的工具名、参数和 `id` | 误当成工具已经成功执行 |
+| `ToolMessage` | 执行器/工具 | 带 `tool_call_id` 的工具返回 | 只要有返回就认定业务成功 |
+| `SCENARIOS[case]["expected"]` | 本章测试定义 | 固定教学场景对工具次数的期望 | 当成模型必须遵循的硬性执行计划 |
+| `verify_trace(...)` | Python 校验逻辑 | 对次数、ID、状态、参数和已知结果做断言 | 误当成任何任务的通用 Agent 评测 |
+
+**关键边界：** 本章的 `verify_trace()` 对固定案例使用精确预期，有利于回归测试；真实业务任务可能存在多条等价路径，不能将此函数的 PASS 泛化为通用的工具选择准确率。
+
+### 源码阅读路线与验证层级
+
+| 顺序 | 阅读对象 | 关键问题 |
+| --- | --- | --- |
+| 1 | [`get_weather`、`calculate`、`get_current_time`](./main.py#L31) | 工具说明、参数类型、返回错误的约定是什么？ |
+| 2 | [`SCENARIOS`](./main.py#L81) | 哪些工具调用次数由测试预期指定？ |
+| 3 | [`build_agent()`](./main.py#L101) | Model、Tools 和 Prompt 如何组合？ |
+| 4 | [`verify_trace()`](./main.py#L138) | 哪些情况会被判错：ID 重复、缺失、顺序错误或工具失败？ |
+| 5 | [`show_trace()`](./main.py#L262) | 消息统计与结果校验分别打印什么？ |
+
+**教学时重点讲解两种“顺序”：** 同一 `AIMessage` 提出多个请求属于批量工具请求；`calculate(1000, 360, "add")` 依赖前一次乘法结果，属于跨模型轮次的顺序依赖。是否存在真实并发，必须结合工具 Span 的起止时间观察，不能仅从时序图推导。
+
+
 ### Multi-Tool Agent 工作原理
 
 ```mermaid
@@ -261,6 +290,19 @@ sequenceDiagram
 消息层面，`AIMessage.tool_calls` 表示**模型请求**；`ToolMessage` 表示**实际工具执行结果**；通过 `tool_call_id` 可以建立一一关联。
 
 ## 4. 运行验证与 LangSmith Trace 深度分析
+
+### 学习验收矩阵：哪些是已实现断言，哪些仍要人工解释？
+
+| 观察项 | 已有源码如何核对 | 教学反例（用于阅读推演，非本轮新增实测） |
+| --- | --- | --- |
+| 请求与执行次数 | `requested` / `executed` 对比 `expected` | 预期两次计算，实际只执行一次 |
+| 调用协议 | `requests_by_id` / `results_by_id` 配对，检查唯一性和顺序 | 工具结果的 ID 关联到另一项工具请求 |
+| 错误传播 | `ToolMessage.status`、空返回和 `Error:` 文本检查 | 除零错误返回被错误地当成计算成功 |
+| 已知业务结果 | 城市、时区、两步计算及最终回答的场景规则 | 数学最终值正确，但乘法与加法顺序错误 |
+| 模型执行成本 | 历史 LangSmith Trace 的模型 Runs / Tokens | 将父级聚合 Token 与子级模型 Token 重复计数 |
+
+**验收口径：** `uv run python 02-multi-tool-agent/main.py --case all` 是**在线**实验，会调用真实模型并可能计费；本章没有 `--self-test` 选项。本轮文档优化仅复核已存在的源码、历史数据和断言设计，不产生新的实验记录。工具状态与业务结果都正确，才适合记录本章固定场景的通过结论。
+
 
 ### 四组实验全部通过
 
@@ -351,6 +393,16 @@ JSON 的 `dotted_order` 提供了各 Run 的启动时间。首轮三个工具（
 `Time` 场景虽然只有一个工具，却耗时 38.13 秒。仅凭该列表不能判断原因是模型生成、网络延迟还是重试；需要另行查看 `chapter02-time` 的详细 Trace，不能将耗时直接归因于时区工具。
 
 ## 5. 排障经验与实践总结
+
+### 读完本章应能回答
+
+1. 为什么 `AIMessage.tool_calls` 中有三个调用，不意味着它们一定并行执行？
+2. 为什么工具执行次数匹配，仍需要检查 `tool_call_id`？
+3. 为什么 `ToolMessage.status == "success"` 还不足以保证计算结果正确？
+4. 如果模型先做加法再做乘法，即使最终回答碰巧正确，为什么仍可能不满足本章实验预期？
+
+**衔接第 03 章：** 本章校验“工具调用过程是否符合约定”；[Structured Output](../03-structured-output/) 将继续讨论“最后交付的应用数据是否符合 Schema 与原始事实”。
+
 
 ### 实践中需要注意的边界
 
