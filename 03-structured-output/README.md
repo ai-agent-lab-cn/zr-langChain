@@ -14,6 +14,11 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, Pydantic, Structured-Outp
 
 ## 1. 实践目标与技术选型
 
+> **本章的核心问题：** 即使 Agent 正确执行过工具，最终输出仍可能不适合业务程序消费。结构化输出解决“数据长什么样”，业务校验解决“数据与输入是否相符”；二者互补，而不是同一项检查。
+
+**推荐源码顺序：** [Schema 定义](./main.py#L28) → [`SCENARIOS`](./main.py#L65) → [`build_agent()`](./main.py#L101) → [`validate_result()`](./main.py#L124) → [`self_test()`](./main.py#L175)。
+
+
 第一章实现了 Tool Calling，第二章验证了多工具选择和连续调用。本章回答另一个问题：**如何让 Agent 返回字段明确、类型受约束、可以被业务代码直接读取的数据？**
 
 对于自然语言回答，应用程序可能需要用正则表达式提取字段；而 Structured Output 可以将输出交付为 Pydantic 对象，再交由程序校验、存储或调用其他服务。
@@ -177,6 +182,30 @@ uv run python 03-structured-output/main.py --case all --strategy provider
 
 ## 3. 核心机制与执行架构
 
+### 三层正确性：格式、约束与事实
+
+```mermaid
+flowchart LR
+    A["原始用户文本"] --> B["Agent：response_format"]
+    B --> C["structured_response"]
+    C --> D{"Pydantic 结构/字段/类型是否有效？"}
+    D -- 否 --> E["Schema 校验失败"]
+    D -- 是 --> F{"业务字段与原文事实是否一致？"}
+    F -- 否 --> G["业务核对失败"]
+    F -- 是 --> H["本章固定样例通过"]
+```
+
+| 层次 | 判定问题 | 对应已有实现 | 不能替代什么 |
+| --- | --- | --- | --- |
+| Schema 形状 | 是否包含必需字段、字段能否解析成指定类型？ | `ContactInfo`、`ReviewAnalysis`、`MeetingActions` | 事实一致性 |
+| 字段约束 | `rating` 是否 1—5、`sentiment` 是否枚举？ | Pydantic `Field` / `Literal` | 与输入文字核对 |
+| 已知事实 | 姓名、电话缺失、任务责任人等是否与固定原文一致？ | `validate_result(case_name, value)` | 任意输入的通用事实核验 |
+
+**容易忽略的 Pydantic v2 细节：** `email: str | None` 表示值可以为 `None`，但在本章未提供默认值的定义中，它仍是**必需字段**；因此“字段缺失”和“字段存在且值为 null”并不一样。第 03 章离线负例已经覆盖这一差异。
+
+**固定样例的局限：** `validate_result()` 逐场景核对已知事实，但不是通用的 Grounding 系统。例如当前 Review 场景主要校验评分、情绪与非空评价要点；这并不能证明所有 `key_points` 都被原文逐条支持。日期的 `YYYY-MM-DD` 格式也不等于已验证真实日历日期。
+
+
 ### 从自由文本到类型化对象
 
 下图展示 Pydantic Schema 如何通过 `response_format` 分别进入 ToolStrategy 与 ProviderStrategy，以及模型生成、Schema 校验、异常处理和业务事实核对的流程。
@@ -190,6 +219,11 @@ uv run python 03-structured-output/main.py --case all --strategy provider
 [🔍 点击预览完整流程图](./structured-output-flow.svg)
 
 ### ProviderStrategy 与 ToolStrategy
+
+**两种策略的教学决策：** 本章显式指定 `ToolStrategy(schema, handle_errors=True)` 或 `ProviderStrategy(schema)`，目的是让读者观察不同消息链路，不是建议线上系统始终固定选其中一种。工具策略中出现的 schema tool 只承载结构化结果，不等于执行了外部业务工具；因此当前 `create_agent(..., tools=[])` 与 `ToolStrategy` 并不矛盾。
+
+观察时至少区分三个量：`structured_response`（交付对象）、`AIMessage.tool_calls`（模型消息中的调用请求）和 `ToolMessage`（对应工具结果）。单凭终端通用提示文字，不能断定 ProviderStrategy 实际执行了 schema tool。
+
 
 | 对比项 | `ToolStrategy(schema)` | `ProviderStrategy(schema)` |
 | --- | --- | --- |
@@ -224,6 +258,18 @@ sequenceDiagram
 **Pydantic 不能防止所有“符合格式的幻觉”**。例如 `phone="13800000000"` 完全符合字符串类型，但原文没有留下电话，就仍是错误数据。本章 `validate_result()` 专门补了这层业务验证。
 
 ## 4. 实验设计、验证标准与 LangSmith 深度分析
+
+### 文档验收矩阵（不新增代码和网络调用）
+
+| 场景 | 应观察的字段 | 成功标准 | 反例 |
+| --- | --- | --- | --- |
+| Contact | `name`、`email`、`phone` | 姓名和邮箱来自原文，未提供电话必须为 `null` | 编造电话号码，类型虽合法但业务应失败 |
+| Review | `rating`、`sentiment`、`key_points` | 评分范围、枚举正确，满足当前固定事实检查 | `rating=6` 或 `sentiment="unknown"` |
+| Meeting | `tasks[].owner`、`priority`、`due_date`、`task` | 两项分工、责任人与任务内容对应 | 责任人与任务错配，或任务列表为空 |
+| Strategy | `structured_response` 与消息轨迹 | 两种策略均获得正确的目标对象，分别记录机制 | 把 Schema Tool Calling 误判为业务工具调用 |
+
+**执行证据：** 本章已实现的 `--self-test` 包含 3 个合法样例与 5 个异常检查；历史真实模型实验为两种策略 × 三类场景的 6 组。上表中的反例用于理解这些现有测试，不代表本轮增加了新实验。离线验证 Schema 与固定业务规则；在线结果仍以原记录中的 Gemini / LangSmith 证据为准。
+
 
 ### 离线自检：3 个合法样例 + 5 个异常检查
 
@@ -345,6 +391,17 @@ Token 数值提取自六条 Trace 的 `AIMessage.usage_metadata`：
 当前六份 Trace JSON 包含调用树、结果、Token 和 Run 的启动标识，但**没有完整的 Run 结束时间或可直接比较的单条费用字段**。因此，本章不填写臆测的 Latency / Cost 数值；后续可由 LangSmith Traces 列表或完整时间线补充。
 
 ## 5. 排障经验与实践总结
+
+### 本章学习自测
+
+1. 为什么 `phone="13800000000"` 可能满足 Schema，却与用户原文冲突？
+2. `str | None` 与 `str | None = None` 在字段缺失时有什么区别？
+3. 为什么 `ToolStrategy` 的 Schema Tool 不算查询天气或操作业务系统？
+4. 如何根据实际模型消息区分 ProviderStrategy 和 ToolStrategy，而不是只看提示文本？
+5. 如果某个结构化对象通过了 `validate_result()`，哪些超出固定样例的事实还没有被验证？
+
+**衔接第 04 章：** 到目前为止，我们关注一次 Agent 请求的工具过程和最终结果。[Agent Memory](../04-agent-memory/) 进一步回答：当用户在后续请求中补充或更正事实时，如何利用会话状态保留并重新提供历史。
+
 
 ### 常见问题
 
