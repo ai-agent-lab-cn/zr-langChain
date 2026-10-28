@@ -12,6 +12,10 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Tool-Calling]
 > **实战项目：** `LChain-Demo`
 > **实践结论：** 已成功完成 Gemini 模型调用、`get_weather` 工具调用、Agent Loop，以及 LangSmith Trace 展示。
 
+> **当前仓库入口（优先阅读）：** [`01-basic-agent/main.py`](./main.py) 是本仓库实际执行文件；本文仍保留 2026-10-17 的 `LChain-Demo/src/agent.py` 独立入门文章与历史实验记录。两种目录结构不要混用，源码行为以当前 `main.py` 为准。
+
+**推荐学习路径：** 先运行当前仓库示例 → 读懂 `create_agent` / `AIMessage` / `ToolMessage` → 按消息顺序复盘一次 Agent Loop → 阅读历史 Trace 及其边界。本文的天气结果始终是**模拟数据**，不是实时天气接口。
+
 ## 1. 目标与技术选型
 
 普通 LLM 应用的典型流程是「用户提问 → 模型回答」；而 Agent 可以在推理过程中**选择工具、执行操作、读取执行结果，再决定如何回答**。因此，仅让模型返回一段文本，还不足以证明 Agent 的工具调用能力。
@@ -58,6 +62,20 @@ tags: [LangChain, AI-Agent, Gemini, LangSmith, Python, uv, Tool-Calling]
 
 ## 2. Quickstart：环境搭建与核心代码
 
+### 当前 zr-langChain 仓库：实际运行方式
+
+以下命令在**仓库根目录**执行；已安装项目依赖时可跳过同步。在线运行需要有效的 Gemini API Key，可能产生费用；LangSmith Tracing 是否启用由本地环境配置控制。
+
+```bash
+uv sync --locked
+test -e .env || cp .env.example .env
+# 在本地 .env 填写 GEMINI_API_KEY；按需设置 GEMINI_MODEL
+uv run --locked python 01-basic-agent/main.py
+```
+
+**不要直接在仓库根目录运行下文历史示例的 `uv init` / `uv add` / `src/agent.py` 命令。** 当前项目使用共享的 `pyproject.toml` 和 `uv.lock`；具体安装细节见 [根目录 INSTALL.md](../INSTALL.md)。本章现行 `main.py` 会从**当前工作目录**查找 `.env`，因此请从仓库根目录运行。
+
+
 ### Quickstart 实践链路
 
 以下展示的是**本章从搭建到验证**的实现路径，而不是一次请求内部的执行细节：
@@ -79,6 +97,22 @@ flowchart TD
 
 ### 项目目录
 
+**当前仓库结构（推荐）：**
+
+```text
+zr-langChain/
+├── .env.example
+├── pyproject.toml
+├── uv.lock
+├── README.md
+└── 01-basic-agent/
+    ├── main.py              # 当前实际运行入口
+    └── README.md            # 本章知识、实践与历史证据
+```
+
+下方 `LChain-Demo` 目录是**早期独立练习的历史结构**，用于理解项目演进，不是当前仓库的目录说明。
+
+
 本次项目目录为 `~/Desktop/LChain-Demo`。以下是本章建议保留的最小结构：
 
 ```text
@@ -95,6 +129,9 @@ LChain-Demo/
 
 ### 环境与依赖
 
+**当前仓库只使用根目录共享的依赖环境与锁文件**，优先执行上方 `uv sync --locked`。下方的 `uv init` / `uv add` 仅用于从零建立独立的 `LChain-Demo` 项目，不用于修改本仓库的锁文件。
+
+
 ```bash
 cd ~/Desktop/LChain-Demo
 
@@ -108,6 +145,9 @@ uv add langchain langchain-google-genai python-dotenv
 已有项目不需要重复 `uv init`。`uv add` 会维护 `pyproject.toml` 和 `uv.lock`；本文不预设特定依赖版本号，实际复现以项目锁文件为准。
 
 ### 环境变量配置
+
+**当前仓库：** 优先从 [`.env.example`](../.env.example) 复制配置模板，默认不要求启用 LangSmith 追踪；下面的 `LChain-Demo` 配置块保留为历史在线实验示例，其中 `LANGSMITH_TRACING=true` 是有意开启上传，非新读者的默认要求。
+
 
 项目根目录的 `.env`：
 
@@ -132,9 +172,9 @@ __pycache__/
 
 > **为什么使用 `GEMINI_API_KEY`？** 这是本次项目已经验证成功的约定。Google Gemini SDK 同时支持 `GEMINI_API_KEY` 和 `GOOGLE_API_KEY`；如果都设置，后者优先。为了避免环境变量冲突，示例显式读取 `GEMINI_API_KEY` 并传入模型构造函数。
 
-### 核心实现：`src/agent.py`
+### 核心实现：历史 `src/agent.py` 与当前 `main.py` 对照
 
-下面是根据本次已成功运行的链路整理的**可复现示例**。核心代码与原始 Quickstart 一致，并增加了必要的 API Key 检查、工具调用验证和 Trace 上传等待。
+下面是历史独立项目的**教学代码快照**，用于按步骤阅读 Agent Loop；它与当前仓库 [`main.py`](./main.py) 的配置路径、工具调用检测及异常处理细节并非完全一致。**实际复现与运行结果以当前仓库的 `main.py` 为准。**
 
 ```python
 import os
@@ -230,13 +270,53 @@ if __name__ == "__main__":
     main()
 ```
 
-执行：
+历史独立项目执行命令（**不适用于当前仓库根目录**）：
 
 ```bash
 uv run python src/agent.py
 ```
 
+当前仓库应执行：
+
+```bash
+uv run --locked python 01-basic-agent/main.py
+```
+
 ## 3. 核心机制与完整架构
+
+### 从真实源码定位一次 Agent 执行
+
+| 阅读顺序 | 当前 `main.py` 位置 | 你需要确认什么 |
+| --- | --- | --- |
+| 1 | [`get_weather(city)`](./main.py#L16) | 返回固定模拟天气；工具并不访问网络 |
+| 2 | [`create_agent(...)`](./main.py#L22) | 传入 Gemini、Python 工具与 system_prompt |
+| 3 | [`agent.invoke(...)`](./main.py#L37) | 输入包含本轮用户消息；一次 invoke 可以有多次模型调用 |
+| 4 | [消息遍历](./main.py#L54) | `AIMessage.tool_calls` 是请求；`ToolMessage` 是执行结果 |
+| 5 | [最终文本输出](./main.py#L70) | 从最终 AIMessage 的文本 content_blocks 提取展示内容 |
+
+**系统指令与消息状态要分开看：** `system_prompt` 影响模型请求，但本示例遍历的是返回的 `result["messages"]`，不能仅根据这个列表判断所有模型请求的完整输入。需要核对真实模型输入时，查看相应的 LangSmith 模型 Run。
+
+### 教学图：Tool Call ID 如何关联请求与结果
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant A as Agent
+    participant M as 模型 Gemini
+    participant T as Python get_weather
+    U->>A: 询问旧金山天气
+    A->>M: messages + tool schema
+    M-->>A: AIMessage.tool_calls（name, args, id）
+    A->>T: 执行 get_weather(city)
+    T-->>A: ToolMessage（tool_call_id 对应请求 id）
+    A->>M: 携带工具结果再次调用模型
+    M-->>A: 最终 AIMessage
+    A-->>U: 明确标注模拟数据的回答
+```
+
+这里的工具调用与结果关联是**协议层知识**；当前第 01 章 `main.py` 仅检查是否出现 `ToolMessage`，**尚未严格校验 ID、工具状态和业务结果**。这些检查已在第 02 章 `verify_trace()` 中实现，因此不能把本章的“Tool Calling 验证: 成功”理解成完整的调用链验收。
+
 
 ### 五个关键接口与对象
 
@@ -309,7 +389,7 @@ sequenceDiagram
 ```mermaid
 flowchart TB
     subgraph ENTRY["① 本地入口与配置"]
-        CLI["CLI: uv run python src/agent.py"]
+        CLI["当前仓库: uv run --locked python 01-basic-agent/main.py"]
         ENV[".env: GEMINI_API_KEY / LANGSMITH_* "]
     end
 
@@ -441,7 +521,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path.cwd() / ".env")
 ```
 
-对本项目的 `src/agent.py`，更稳妥的方式是按文件位置定位根目录：
+对历史独立 `LChain-Demo/src/agent.py`，可以按文件位置定位其项目根目录（**这不是当前 `01-basic-agent/main.py` 的现行代码**）：
 
 ```python
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -454,6 +534,19 @@ load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 ### 本章结论与下一步
 
+### 学习验收：不用重新请求 Gemini 也能完成的检查
+
+| 检查问题 | 通过标准 | 本章证据 |
+| --- | --- | --- |
+| 谁决定调用工具？ | 明确是模型发出 Tool Call，LangChain 负责调度工具 | `create_agent` 与 `AIMessage.tool_calls` |
+| 如何证明 Python 工具执行过？ | 找到与调用相对应的 `ToolMessage`，并检查其结果 | `main.py` 消息遍历；历史 Trace |
+| 天气是不是实时数据？ | 明确回答“模拟”，不宣称当前天气 | `get_weather()` 的固定返回值 |
+| 一次 invoke 等于一次模型调用吗？ | 回答“不一定”，并能画出工具调用循环 | 上方时序图 |
+| 本章验证有什么不足？ | 指出只检测出现工具结果、未严格检验 ID 与结果 | 第 02 章 `verify_trace()` 补足 |
+
+**验收分层：** 知识检查可通过阅读源码与历史日志完成；当前第 01 章没有单独的 `--self-test` 离线入口。历史在线结果只说明当时该样例通过；本轮文档优化**不新增一次新的 Gemini 或 LangSmith 验收**。
+
+
 本章完成了一个具备以下特点的最小 AI Agent：
 
 - **能运行：** Python + uv 管理依赖，Gemini 能正常响应。
@@ -465,7 +558,7 @@ load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 > **Gemini 负责决策，Python 工具负责执行，LangChain 负责协调，LangSmith 负责观测。**
 
-下一章将以现有 `LChain-Demo` 为基础，实践 **Multi-Tool Agent**：增加计算器、时间查询等工具，观察模型如何选择工具、传递参数，并在 LangSmith 中分析多工具调用路径。
+下一章在当前 `zr-langChain` 仓库的 [02-multi-tool-agent](../02-multi-tool-agent/) 中实践 **Multi-Tool Agent**：增加计算器、时间查询等工具，观察模型如何选择工具、传递参数，并在 LangSmith 中分析多工具调用路径。
 
 ---
 
