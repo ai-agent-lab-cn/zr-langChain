@@ -14,6 +14,11 @@ tags: [LangChain, LangGraph, Agent, Memory, Short-Term-Memory, Gemini, LangSmith
 
 ## 1. 实践目标与技术选型
 
+> **本章与第 03 章的分界：** 第 03 章保证某一次结果具备需要的数据结构；第 04 章解决多次 `invoke` 之间如何根据 `thread_id` 保留、读取和延续状态。Checkpointer 保存的是可恢复的应用执行状态，不是在训练模型或自动建立跨线程用户画像。
+
+**先修知识：** [第 01 章消息链](../01-basic-agent/README.md)、[第 03 章结构化结果](../03-structured-output/README.md)。本章阅读顺序：`thread_config()` → `ask()` / `history()` → `build_agent()` → Remember / Isolation / Update → `offline_checks()`。
+
+
 第一章通过 `create_agent()` 和 Tool Calling 实现最小 Agent；第二章验证多工具调用；第三章利用 Pydantic 和 `response_format` 得到类型化结果。但如果每次调用都只传入最新一句话，Agent 就无法稳定地引用前几轮的用户信息。
 
 本章关注的不是模型权重发生了变化，而是**Agent 如何将当前会话的消息历史保存为可恢复的状态，并在后续调用时重新使用**。
@@ -145,6 +150,34 @@ uv run python 04-agent-memory/main.py --case update
 
 ## 3. 核心机制与执行架构
 
+### 五个容易混淆的对象
+
+| 对象 | 在当前实现中负责什么 | 不代表什么 |
+| --- | --- | --- |
+| `thread_id` | 从 Checkpointer 中定位同一条会话状态链 | 用户登录凭证、身份校验或租户隔离 |
+| `messages` | Agent State 中的消息历史 | 必然全部原样进入每次模型请求 |
+| `State` | 当前 Agent 执行所维护的状态值 | 模型的永久知识 |
+| `Checkpoint` / `InMemorySaver` | 在进程内保存、读取线程状态快照 | 跨进程、跨重启的持久性 |
+| `agent.get_state(config)` | 按线程检查已保存的状态快照 | 对真实模型输入和回答正确性的完整证明 |
+
+当前第 04 章没有实现历史裁剪与摘要，因此既有消息通常会被用于继续会话；但在更复杂的 Agent 中，状态持有消息和实际送给模型的上下文可以不同。这个区别将在 [第 10 章 Context Engineering](../10-context-engineering/) 深入讲解。
+
+### 运行时状态图：同一线程与不同线程
+
+```mermaid
+flowchart TD
+    A["invoke: thread A，第 1 轮"] --> S[("InMemorySaver")]
+    S --> B["invoke: thread A，第 2 轮"]
+    B --> C["根据 A 的历史回答"]
+    D["invoke: thread B，第 1 轮"] --> S
+    S --> E["B 仅加载 B 的线程状态"]
+    C -. "agent.get_state(config A)" .-> F["查看 A 的状态"]
+    E -. "agent.get_state(config B)" .-> G["查看 B 的状态"]
+```
+
+这是一张**概念图**：两条线程共享同一个 Saver 实例，但由不同 `thread_id` 索引各自的状态；箭头不表示 A 和 B 在真实运行中必须按图示顺序执行。读取当前状态可使用 `get_state`，要证明模型实际看到了哪些消息仍需检查对应模型 Run。
+
+
 ### Thread、State 与 Checkpoint
 
 <a href="./agent-memory-flow.svg">
@@ -202,6 +235,22 @@ Checkpoint 保留原信息与更正信息；它**不会自动删除旧消息或�
 `InMemorySaver` 的状态存放在当前进程的内存中。同一个 Agent 实例使用相同的 Saver 和 `thread_id`，能够在多次 `invoke` 之间延续历史；**重启 Python 程序后不能依赖它恢复旧对话**。如需在重启后继续，使用 SQLite、PostgreSQL 等支持持久化的 Checkpointer；跨线程长期保存用户偏好则应另行设计 Store。不要将二者混为一谈。
 
 ## 4. 实验设计、验收标准与 LangSmith 分析
+
+### 源码与验证证据一一对应
+
+| 学习对象 | 源码入口 | 已有实验验证什么 |
+| --- | --- | --- |
+| 线程配置 | [`thread_config()`](./main.py#L32) | 同一与不同 `thread_id` 的作用域 |
+| 检查快照 | [`history()`](./main.py#L54) | `get_state().values["messages"]` 的可见历史 |
+| 记住与回忆 | [`run_remember()`](./main.py#L91) | 同一线程保存旧事实并在后续轮次回忆 |
+| 线程隔离 | [`run_isolation()`](./main.py#L108) | B 的历史不包含 A 的项目代号 |
+| 事实更正 | [`run_update()`](./main.py#L130) | 新旧信息仍存在，模型回答以 Go 为准 |
+| 离线集成 | [`offline_checks()`](./main.py#L154) | 真实 Agent + FakeListChatModel + InMemorySaver 的状态机制 |
+
+**验收分层：** `--self-test` 是真实 Agent 与 Checkpointer 的离线集成验证，但使用 FakeListChatModel，不证明模型正确理解了历史。在线 Remember / Isolation / Update 历史实验验证了固定样例的回答与状态，不证明所有自然语言更正一定被正确采纳。
+
+**重要限定：** `offline_checks()` 使用一个新的 `InMemorySaver` 来模拟新进程拿不到旧状态；它不是实际停止并重启服务后的跨进程持久化测试。当前没有验证持久化数据库、身份验证、跨租户权限或多实例共享。
+
 
 ### 四类验证
 
@@ -278,6 +327,17 @@ Checkpoint: N 条消息；其中 HumanMessage M 条
 > **指标边界：** 本次导出的 JSON 没有完整的开始/结束时间与单条费用字段，因此**无法可靠计算 Latency / Cost**，不填写推测值。LangSmith 用于执行追踪，不能替代持久化 Checkpointer；本实验也没有验证进程重启后的状态恢复。
 
 ## 5. 排障经验与实践总结
+
+### 本章学习自测与工程决策
+
+1. 两次 `invoke` 传入相同 `thread_id`，为什么第二次可能看到第一轮的消息？
+2. 两个不同 `thread_id` 都包含用户消息，为什么这**不等于**已实现用户身份认证？
+3. 为什么“首选语言由 Python 改为 Go”不表示 Checkpointer 自动删除了旧信息？
+4. 为什么 `get_state()` 的 `messages` 列表不总能代表下一次模型实际使用的上下文？
+5. 如果程序必须在重启后继续会话，应从哪类 Checkpointer 能力开始设计？如果需要跨会话偏好，则应考虑什么 Store？
+
+**本章完成口径：** 能正确解释并读懂既有离线/在线证据，以及 InMemorySaver 的边界，就完成了第 04 章知识目标。长期记忆、上下文预算、权限隔离与持久恢复分别在后续章节或进阶工程中继续讨论；本轮不新增相关实现。
+
 
 ### 常见问题
 
