@@ -28,8 +28,6 @@ test -e .env || cp .env.example .env
 uv run --locked python 01-basic-agent/main.py
 ```
 
-详细安装、环境变量和排障见 [INSTALL.md](./INSTALL.md)。第一章以实际 `main.py` 为准；早期文章中的 `LChain-Demo/src/agent.py` 是独立入门示例的目录写法。
-
 ## 二、12 章学习路线
 
 | 阶段 | 章节 | 学完应能说明 / 验证 | 当前验收范围 |
